@@ -18,7 +18,7 @@ html:has(body.in-tools) {
   overflow-x: hidden !important;
   overflow-y: auto !important;
   scroll-behavior: auto !important;
-  scrollbar-gutter: auto;
+  scrollbar-gutter: stable;
   scrollbar-width: thin;
   scrollbar-color: rgba(52, 23, 10, 0.32) transparent;
 }
@@ -171,6 +171,7 @@ html body.in-workspace #view-workspace.is-on .ws-stage,
   padding-left: 0 !important;
   padding-right: 0 !important;
   box-sizing: border-box !important;
+  transition: margin-left 0.5s cubic-bezier(0.22, 1, 0.36, 1) !important;
 }
 
 body.rail-hidden #view-workspace.is-on .ws-stage {
@@ -228,7 +229,6 @@ html body.in-workspace #view-workspace.is-on .ws-stage__scroll,
   overscroll-behavior: contain;
 }
 
-#view-workspace .table-wrap,
 #view-workspace .search-table-host,
 #view-workspace .history-table-host,
 #view-workspace .party-table-host,
@@ -248,7 +248,8 @@ html body.in-workspace #view-workspace.is-on .ws-stage__scroll,
   max-width: 100%;
   position: relative;
   overflow-x: auto !important;
-  overflow-y: visible !important;
+  overflow-y: hidden !important;
+  overflow-y: clip !important;
   max-height: none !important;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-x: contain;
@@ -534,7 +535,8 @@ body.wipe-active .nexo-thead-float {
   #view-workspace .party-table-host,
   #view-workspace .trash-table-host {
     overflow-x: auto !important;
-    overflow-y: visible !important;
+    overflow-y: hidden !important;
+    overflow-y: clip !important;
     -webkit-overflow-scrolling: touch;
   }
   #view-workspace .table thead th,

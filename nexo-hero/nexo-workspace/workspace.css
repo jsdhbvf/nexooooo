@@ -5715,7 +5715,7 @@ body.rail-hidden #view-workspace .topbar {
   width: 100%;
   max-width: 100%;
   overflow-x: auto;
-  overflow-y: visible;
+  overflow-y: hidden;
   max-height: none;
   border: 1px solid #E8D8C5 !important;
   border-radius: 14px !important;
@@ -10026,7 +10026,7 @@ body:not(.is-admin) #wsSideMenu li.rail-admin-only {
 /* ===== Table density + centered columns (Admin / all hosts) ===== */
 #view-workspace .table-wrap {
   overflow-x: auto;
-  overflow-y: visible;
+  overflow-y: hidden;
   max-height: none;
   -webkit-overflow-scrolling: touch;
 }
@@ -11300,15 +11300,14 @@ html.lenis-smooth #view-workspace .ws-stage {
   flex-wrap: wrap;
   gap: 8px;
 }
-/* Table re-render fade — applied to every workspace table-wrap
-   (History, Search, Parties, Banks, Ledger, Trash), not just Search,
-   so filtering/sorting/refreshing feels consistent everywhere. */
+/* Table re-render fade lives in nexo-butter.css. Animating .table-wrap here
+   retriggered on every History innerHTML rebuild and flashed an inner scrollbar. */
 #view-workspace .table-wrap {
-  animation: nexoSearchTableIn 0.28s ease both;
+  animation: none;
 }
 @keyframes nexoSearchTableIn {
-  from { opacity: 0.55; transform: translateY(4px); }
-  to { opacity: 1; transform: none; }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 @media (prefers-reduced-motion: reduce) {
   #view-workspace .table-wrap { animation: none; }
@@ -11327,12 +11326,12 @@ html.lenis-smooth #view-workspace .ws-stage {
   pointer-events: none;
 }
 @keyframes nexoRowIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: none; }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 @keyframes nexoRowOut {
-  from { opacity: 1; transform: none; }
-  to { opacity: 0; transform: translateY(-4px); }
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   #view-workspace .table tbody tr,
@@ -11476,9 +11475,11 @@ html.lenis-smooth #view-workspace .ws-stage-body {
 
 #view-workspace .table-wrap {
   overflow-x: auto;
-  overflow-y: visible;
+  overflow-y: hidden;
+  overflow-y: clip;
   max-height: none;
   overscroll-behavior-x: contain;
+  transform: none;
 }
 
 #view-workspace .table thead th,
@@ -12150,7 +12151,7 @@ html.lenis-smooth #view-workspace .ws-stage-body {
 
 /* Smooth tables: avoid expensive paints */
 #view-workspace .table-wrap {
-  contain: layout style;
+  contain: none;
 }
 #view-workspace .table tbody tr {
   /* content-visibility removed — caused jank while scrolling long tables */
@@ -12277,8 +12278,9 @@ html.lenis-smooth #view-workspace .ws-stage-body {
 
 /* ===== Workspace smoothness (no transform on ancestors of fixed rail/topbar) ===== */
 #view-workspace .table-wrap {
-  contain: layout style;
+  contain: none;
   overflow-x: auto;
+  overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   box-shadow: none !important;
 }

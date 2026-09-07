@@ -1,12 +1,13 @@
-NEXO — workspace build (Lenis window scroll)
+NEXO — buttery-smooth workspace build
 
-Vanilla HTML / CSS / JS. Open index.html via a static server.
-No React / build step required.
+Vanilla HTML / CSS / JS. Open index.html via a static server
+(python -m http.server, npx serve, Live Server). No build step.
 
-Scroll:
-  Dashboard, New, Search, History, and every other workspace
-  section use the BROWSER / WINDOW scroller — not an inner pane.
-  Lenis (same engine as lenis.darkroom.engineering, lerp 0.1)
-  smooths wheel and trackpad. Touch stays native so phones never hitch.
+Motion:
+  GSAP hero reveals on every workspace section.
+  KPI cards count up on Dashboard.
+  History / Search / Trash tables no longer flash an inner scrollbar.
+  Sidebar content glides with the rail. Dialogs fade out on close.
+  Lenis (lerp 0.1) smooths window wheel / trackpad. Touch stays native.
 
 Demo login: admin / admin

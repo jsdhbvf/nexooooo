@@ -445,6 +445,9 @@
     v.setAttribute("aria-hidden", "false");
     document.body.classList.add("in-tools", "in-module");
     init();
+    if (global.NexoButter && typeof global.NexoButter.revealTools === "function") {
+      try { global.NexoButter.revealTools(v); } catch (eR) {}
+    }
     if (global.NexoScroll) {
       global.NexoScroll.sync();
       requestAnimationFrame(function () { global.NexoScroll.resize(); });

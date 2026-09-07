@@ -1,0 +1,220 @@
+/* NEXO butter — loaded last. Cascade-winning motion + table-scroll lock.
+   Transform/opacity only. Respects prefers-reduced-motion. */
+
+:root {
+  --butter-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --butter-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --butter-dur: 0.5s;
+  --butter-fast: 0.2s;
+}
+
+/* —— 2.1 Sidebar: content glides with the rail (margin-left is the winner) —— */
+html body.in-workspace #view-workspace.is-on .ws-stage,
+#view-workspace.is-on .ws-stage,
+#view-workspace .ws-stage {
+  transition: margin-left 0.5s cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+body.rail-hidden #view-workspace.is-on .ws-stage,
+body.rail-hidden #view-workspace .ws-stage {
+  transition: margin-left 0.5s cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+#view-workspace .topbar {
+  transition: left 0.5s cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+#view-workspace .nexo-shell {
+  transition: left 0.5s cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+
+/* Page enter is GSAP (hero stagger) — kill the old whole-page translate
+   which shoved tables and flashed an inner scrollbar. */
+#view-workspace .ws-page.is-active {
+  animation: none !important;
+}
+#view-workspace .ws-page.is-entering {
+  will-change: opacity;
+}
+
+/* —— KPI numbers: no width jitter while counting —— */
+#view-workspace .kpi-card .stat-value,
+#view-workspace .stat-value,
+#view-workspace .ledger-kpi__value {
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  display: inline-block;
+}
+#view-workspace #dCount,
+#view-workspace #dToday,
+#view-workspace #dMonth {
+  min-width: 2.5ch;
+}
+#view-workspace #dAmount {
+  min-width: 8ch;
+}
+
+/* —— Table scrollbar flicker (History / Search / Trash / …) ——
+   overflow-x:auto + overflow-y:visible computes y to auto.
+   Translating the wrap (or fading it on every innerHTML rebuild) makes a
+   nested bar appear, then vanish. Lock Y, never transform the wrap, never
+   CSS-animate it, and hide the gutter so layout never jumps. */
+#view-workspace .table-wrap,
+#view-workspace .ledger-table-wrap,
+#view-workspace .search-table-host .table-wrap,
+#view-workspace .history-table-host .table-wrap,
+#view-workspace #allTable .table-wrap,
+#view-workspace #searchTable .table-wrap,
+#view-workspace #trashTable .table-wrap,
+#view-workspace #partiesTable .table-wrap,
+#view-workspace #banksTable .table-wrap,
+#view-workspace #ledgerTable .table-wrap {
+  contain: none !important;
+  transform: none !important;
+  filter: none !important;
+  animation: none !important;
+  will-change: auto !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  max-height: none !important;
+  scrollbar-gutter: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+#view-workspace .table-wrap::-webkit-scrollbar,
+#view-workspace .ledger-table-wrap::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
+  background: transparent;
+}
+
+/* Hosts may hero-slide; they must not become overflow boxes. */
+#view-workspace .search-table-host,
+#view-workspace .history-table-host,
+#view-workspace .party-table-host,
+#view-workspace .parties-table-host,
+#view-workspace .banks-table-host,
+#view-workspace .ledger-table-host,
+#view-workspace .trash-table-host,
+#view-workspace .table-host {
+  overflow: visible !important;
+}
+
+#view-workspace .table,
+#view-workspace table.table {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Row enter: opacity only — translateY overflows the wrap and flashes a bar.
+   Short enough that a full table rebuild (filter/sort) still feels instant. */
+#view-workspace .table tbody tr,
+#view-workspace table.table tbody tr {
+  animation: nexoRowFade 0.16s ease both;
+  transform: none !important;
+}
+@keyframes nexoRowFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+#view-workspace .table tbody tr.is-leaving,
+#view-workspace table.table tbody tr.is-leaving {
+  animation: nexoRowOutButter 0.16s ease both !important;
+  pointer-events: none;
+}
+@keyframes nexoRowOutButter {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* Cheap hover — background only */
+#view-workspace .table tbody td {
+  transition: background-color 0.14s ease !important;
+}
+#view-workspace .table tbody tr:hover td {
+  background: rgba(245, 230, 211, 0.55) !important;
+  transition: background-color 0.14s ease !important;
+}
+
+/* —— History filter menus (hx) open/close —— */
+#view-workspace .hx-menu {
+  display: block !important;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(-8px) scale(0.985);
+  transform-origin: top left;
+  transition:
+    opacity 0.18s ease,
+    transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0.2s;
+}
+#view-workspace .hx-menu[hidden] {
+  display: block !important;
+}
+#view-workspace .hx-menu.is-open,
+#view-workspace .hx-chip.is-open > .hx-menu {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: none;
+}
+
+/* —— Tools screen motion baseline —— */
+#view-tools .tools-card {
+  transition:
+    transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+#view-tools .tools-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(52, 23, 10, 0.08);
+  border-color: rgba(181, 85, 0, 0.28);
+}
+#view-tools .tools-stage {
+  overflow: visible;
+}
+
+/* —— Dialog / quick-edit close —— */
+#nexo-dialog-root.is-closing,
+#nexo-quick-edit-root.is-closing {
+  animation: nexoOverlayOut 0.16s ease both;
+}
+#nexo-dialog-root.is-closing .nexo-dialog,
+#nexo-quick-edit-root.is-closing .nqe-panel {
+  animation: nexoDialogOut 0.16s ease both;
+}
+@keyframes nexoOverlayOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes nexoDialogOut {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(8px) scale(0.98); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html body.in-workspace #view-workspace.is-on .ws-stage,
+  #view-workspace.is-on .ws-stage,
+  #view-workspace .ws-stage,
+  #view-workspace .topbar,
+  #view-workspace .nexo-shell,
+  #view-workspace .nexo-rail,
+  #view-workspace .table-wrap,
+  #view-workspace .table tbody tr,
+  #view-workspace .hx-menu,
+  #view-tools .tools-card,
+  #nexo-dialog-root.is-closing,
+  #nexo-quick-edit-root.is-closing {
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
+    filter: none !important;
+  }
+}
+
+@media (max-width: 900px) {
+  html body.in-workspace #view-workspace.is-on .ws-stage,
+  #view-workspace.is-on .ws-stage {
+    transition: margin-left 0.4s cubic-bezier(0.22, 1, 0.36, 1) !important;
+  }
+}

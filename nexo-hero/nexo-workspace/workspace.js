@@ -203,15 +203,22 @@
   var _pageEnterToken = 0;
   function pageEnter(el) {
     if (!el) return;
-    /* Instant show — GSAP page tweens were adding workspace lag */
+    _pageEnterToken += 1;
     try {
       el.style.opacity = "1";
-      el.style.transform = "none";
       el.style.visibility = "visible";
     } catch (eV) {}
-    if (hasGsap()) {
+    if (global.NexoButter && typeof global.NexoButter.revealPage === "function") {
+      try { global.NexoButter.revealPage(el); } catch (eB) {}
+      return;
+    }
+    if (hasGsap() && !reduced()) {
       try { global.gsap.killTweensOf(el); } catch (eK) {}
-      try { global.gsap.set(el, { opacity: 1, y: 0, clearProps: "transform" }); } catch (eG) {}
+      try {
+        global.gsap.fromTo(el, { opacity: 0.001, y: 10 }, {
+          opacity: 1, y: 0, duration: 0.28, ease: "power3.out", overwrite: true
+        });
+      } catch (eG) {}
     }
   }
 
@@ -756,13 +763,26 @@
         el.style.visibility = "visible";
       } catch (eS) {}
     }
-    set("dCount", String(count));
+    function kpi(id, value, opts) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      try {
+        el.style.opacity = "1";
+        el.style.visibility = "visible";
+      } catch (eS) {}
+      if (global.NexoButter && typeof global.NexoButter.countTo === "function") {
+        global.NexoButter.countTo(el, value, opts);
+        return;
+      }
+      el.textContent = opts && opts.format ? opts.format(value) : String(value);
+    }
+    kpi("dCount", count);
     set("dCountMeta", count + " record" + (count === 1 ? "" : "s") + " · All time");
-    set("dAmount", money(totalAmt));
+    kpi("dAmount", totalAmt, { decimals: 2, format: money });
     set("dAmountMeta", "All time");
-    set("dToday", String(todayCount));
+    kpi("dToday", todayCount);
     set("dTodayMeta", money(todayAmt) + " today");
-    set("dMonth", String(monthCount));
+    kpi("dMonth", monthCount);
     set("dMonthMeta", money(monthAmt) + " this month");
     set("dCountTrend", "");
     set("dAmountTrend", "");
@@ -1122,17 +1142,6 @@
       }, 420);
     }
     syncThumb(true);
-    if (name === "dashboard") {
-      refreshDashboard({ animate: false });
-      if (!samePage) {
-        requestAnimationFrame(function () {
-          resizeFlowChart();
-          if (!_barsGrew) barGrow(null, true);
-        });
-      } else {
-        resizeFlowChart();
-      }
-    }
     if (name === "new" && global.NexoNewSlip && global.NexoNewSlip.onPageShow) {
       global.NexoNewSlip.onPageShow();
     }
@@ -1145,8 +1154,17 @@
       restoreScroll(name);
       pageEnter($('#view-workspace .ws-page[data-ws-page="' + name + '"]'));
       announce(PAGE[name].title);
-    } else if (name === "dashboard") {
-      refreshDashboard({ animate: false });
+    }
+    if (name === "dashboard") {
+      refreshDashboard({ animate: !samePage });
+      if (!samePage) {
+        requestAnimationFrame(function () {
+          resizeFlowChart();
+          if (!_barsGrew) barGrow(null, true);
+        });
+      } else {
+        resizeFlowChart();
+      }
     }
   }
 

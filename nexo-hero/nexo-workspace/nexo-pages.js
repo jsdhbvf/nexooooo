@@ -941,26 +941,34 @@ function historyRangeBounds(range) {
   async function moveToTrash(ids) {
     if (!ids || !ids.length) { announce("Select slips first."); return; }
     if (!(await nexoConfirm("Move " + ids.length + " slip(s) to Deleted Slips?", { title: "Move to trash", okText: "Move", cancelText: "Cancel" }))) return;
-    var db = D.load();
-    var keep = [];
-    var movedIds = [];
-    (db.slips || []).forEach(function (s) {
-      if (ids.indexOf(s.id) >= 0) {
-        s.deletedAt = new Date().toISOString();
-        db.deletedSlips = db.deletedSlips || [];
-        db.deletedSlips.push(s);
-        movedIds.push(s.id);
-      } else keep.push(s);
-    });
-    db.slips = keep;
-    D.save(db);
-    announce(ids.length + " slip(s) moved to trash.");
-    notify(movedIds.length === 1 ? "Moved to trash" : movedIds.length + " moved to trash", {
-      actionLabel: "Undo",
-      onAction: function () { restoreFromTrash(movedIds); }
-    });
-    renderHistory(); renderSearch(); renderTrash();
-    if (global.NexoWorkspace && global.NexoWorkspace.refresh) global.NexoWorkspace.refresh();
+    function commit() {
+      var db = D.load();
+      var keep = [];
+      var movedIds = [];
+      (db.slips || []).forEach(function (s) {
+        if (ids.indexOf(s.id) >= 0) {
+          s.deletedAt = new Date().toISOString();
+          db.deletedSlips = db.deletedSlips || [];
+          db.deletedSlips.push(s);
+          movedIds.push(s.id);
+        } else keep.push(s);
+      });
+      db.slips = keep;
+      D.save(db);
+      announce(ids.length + " slip(s) moved to trash.");
+      notify(movedIds.length === 1 ? "Moved to trash" : movedIds.length + " moved to trash", {
+        actionLabel: "Undo",
+        onAction: function () { restoreFromTrash(movedIds); }
+      });
+      renderHistory(); renderSearch(); renderTrash();
+      if (global.NexoWorkspace && global.NexoWorkspace.refresh) global.NexoWorkspace.refresh();
+    }
+    var host = $("allTable") || $("searchTable");
+    if (global.NexoButter && typeof global.NexoButter.leaveRows === "function") {
+      global.NexoButter.leaveRows(host, ids, commit);
+    } else {
+      commit();
+    }
   }
 
   function restoreFromTrash(ids) {
@@ -986,12 +994,20 @@ function historyRangeBounds(range) {
   async function destroyFromTrash(ids) {
     if (!ids || !ids.length) { announce("Select slips to permanently delete."); return; }
     if (!(await nexoConfirm("Permanently delete " + ids.length + " slip(s)? This cannot be undone.", { title: "Permanent delete", okText: "Delete", cancelText: "Cancel", danger: true }))) return;
-    var db = D.load();
-    db.deletedSlips = (db.deletedSlips || []).filter(function (s) { return ids.indexOf(s.id) < 0; });
-    D.save(db);
-    announce(ids.length + " slip(s) permanently deleted.");
-    notify(ids.length === 1 ? "Permanently deleted" : ids.length + " permanently deleted");
-    renderTrash();
+    function commit() {
+      var db = D.load();
+      db.deletedSlips = (db.deletedSlips || []).filter(function (s) { return ids.indexOf(s.id) < 0; });
+      D.save(db);
+      announce(ids.length + " slip(s) permanently deleted.");
+      notify(ids.length === 1 ? "Permanently deleted" : ids.length + " permanently deleted");
+      renderTrash();
+    }
+    var host = $("trashTable");
+    if (global.NexoButter && typeof global.NexoButter.leaveRows === "function") {
+      global.NexoButter.leaveRows(host, ids, commit);
+    } else {
+      commit();
+    }
   }
 
   function editSlip(id) {
@@ -2009,23 +2025,38 @@ function historyRangeBounds(range) {
       function closeAllHxMenus(except) {
         document.querySelectorAll("#historyFiltersBar .hx-menu").forEach(function (m) {
           if (except && m === except) return;
-          m.hidden = true;
-          m.setAttribute("hidden", "");
-          m.style.display = "none";
+          m.classList.remove("is-open");
+          window.setTimeout(function () {
+            if (!m.classList.contains("is-open")) {
+              m.hidden = true;
+              m.setAttribute("hidden", "");
+              m.style.display = "";
+            }
+          }, 180);
         });
         document.querySelectorAll("#historyFiltersBar .hx-chip__btn").forEach(function (b) {
           b.setAttribute("aria-expanded", "false");
         });
         document.querySelectorAll("#historyFiltersBar .hx-chip").forEach(function (c) {
+          if (except && c.contains(except)) return;
           c.classList.remove("is-open");
         });
       }
       function openMenu(btn, menu) {
-        var open = menu.hidden;
-        closeAllHxMenus();
-        if (open) {
+        var willOpen = menu.hidden || !menu.classList.contains("is-open");
+        closeAllHxMenus(willOpen ? menu : null);
+        if (willOpen) {
           menu.hidden = false;
+          menu.removeAttribute("hidden");
+          menu.style.display = "";
+          var chip = btn.closest(".hx-chip");
+          if (chip) chip.classList.add("is-open");
           btn.setAttribute("aria-expanded", "true");
+          window.requestAnimationFrame(function () {
+            window.requestAnimationFrame(function () {
+              menu.classList.add("is-open");
+            });
+          });
         }
       }
       function applyHist() {
