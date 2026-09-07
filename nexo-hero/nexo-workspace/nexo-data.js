@@ -30,27 +30,10 @@
 
   function load() {
     try {
-      function parseKey(k) {
-        try {
-          var raw = localStorage.getItem(k);
-          if (!raw) return null;
-          var db = JSON.parse(raw);
-          if (!db || typeof db !== "object") return null;
-          return db;
-        } catch (e) { return null; }
-      }
-      var a = parseKey(KEY);
-      var b = parseKey(KEY2);
-      var db = a;
-      /* If primary is empty but legacy key has slips, use the richer store */
-      if ((!a || !Array.isArray(a.slips) || !a.slips.length) && b && Array.isArray(b.slips) && b.slips.length) {
-        db = b;
-      } else if (a && b && Array.isArray(a.slips) && Array.isArray(b.slips) && b.slips.length > a.slips.length) {
-        db = b;
-      } else if (!db) {
-        db = b;
-      }
-      if (!db) return empty();
+      var raw = localStorage.getItem(KEY) || localStorage.getItem(KEY2);
+      if (!raw) return empty();
+      var db = JSON.parse(raw);
+      if (!db || typeof db !== "object") return empty();
       var base = empty();
       Object.keys(base).forEach(function (k) {
         if (db[k] == null) db[k] = base[k];
@@ -82,14 +65,52 @@
     } catch (e2) {}
   }
 
+  /* Fields that hold real business data. A restore must reflect the
+     backup file for these EXACTLY — never silently keep whatever the
+     browser already had lying around (old demo rows, a stray value
+     from a previous session, etc.). If the backup doesn't include a
+     key, it resets to a clean empty default — it never falls back to
+     the currently-loaded (possibly stale/seeded) copy. */
+  var DATA_KEYS = [
+    "slips", "deletedSlips", "parties", "banks", "categories",
+    "recentParties", "recentRemarks", "fieldHistory",
+    "lastSlipDate", "lastRoute", "slipSeq", "nextId"
+  ];
+
   function prepareRestore(raw) {
     if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
     var source = raw;
     if (raw.transactions && typeof raw.transactions === "object" && !Array.isArray(raw.transactions)) {
       source = Object.assign({}, raw, raw.transactions);
     }
-    var next = Object.assign({}, load(), source);
-    delete next.transactions;
+
+    var defaults = empty();
+    var current = load();
+    var next = {};
+
+    /* Business data: taken only from the backup file itself, field by
+       field, falling back to a clean default (never to whatever is
+       already in the browser) when the backup omits a field. */
+    DATA_KEYS.forEach(function (k) {
+      next[k] = Object.prototype.hasOwnProperty.call(source, k) ? source[k] : defaults[k];
+    });
+
+    /* Login accounts are app configuration, not ledger data — keep
+       the existing accounts unless the backup explicitly includes
+       its own, so restoring a data backup never signs anyone out. */
+    next.users = Array.isArray(source.users) && source.users.length ? source.users : current.users;
+    next.nextUserId = source.nextUserId != null ? source.nextUserId : current.nextUserId;
+
+    /* Anything else in the file (exportedAt, version, tags, etc.) is
+       passed through as-is for reference, but never used to fabricate
+       or infer business data. */
+    Object.keys(source).forEach(function (k) {
+      if (k === "transactions") return;
+      if (DATA_KEYS.indexOf(k) !== -1) return;
+      if (k === "users" || k === "nextUserId") return;
+      next[k] = source[k];
+    });
+
     if (!Array.isArray(next.slips) ||
         !Array.isArray(next.deletedSlips) ||
         !Array.isArray(next.parties) ||

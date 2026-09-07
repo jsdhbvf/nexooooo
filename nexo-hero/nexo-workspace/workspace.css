@@ -1544,6 +1544,14 @@ body.rail-hidden #view-workspace .topbar {
   display: block !important;
   visibility: visible;
   pointer-events: auto;
+  animation: nexoPageIn 0.18s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes nexoPageIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #view-workspace .ws-page.is-active { animation: none; }
 }
 #view-workspace .ws-page[hidden]:not(.is-active) {
   display: none !important;
@@ -8662,9 +8670,49 @@ body.nexo-overlay-open {
   from { opacity: 0; }
   to { opacity: 1; }
 }
+@keyframes nexoOverlayOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
 @keyframes nexoDialogIn {
   from { opacity: 0; transform: translateY(8px) scale(0.98); }
   to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes nexoDialogOut {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(8px) scale(0.98); }
+}
+/* Closing mirrors the entrance in reverse (JS adds .is-closing, then
+   hides after the animation finishes) so the dialog fades out instead
+   of vanishing instantly the moment [hidden] is set. */
+#nexo-dialog-root.is-closing {
+  animation: nexoOverlayOut 0.15s ease forwards !important;
+  pointer-events: none !important;
+}
+#nexo-dialog-root.is-closing .nexo-dialog {
+  animation: nexoDialogOut 0.15s cubic-bezier(0.4, 0, 1, 1) forwards !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  #nexo-dialog-root.is-closing,
+  #nexo-dialog-root.is-closing .nexo-dialog {
+    animation: none !important;
+  }
+}
+
+/* Quick Edit panel — same fade+scale entrance/exit as the confirm dialog,
+   so the two overlays feel consistent (audit §2.8). */
+#nexo-quick-edit-root.is-closing {
+  animation: nexoOverlayOut 0.15s ease forwards !important;
+  pointer-events: none !important;
+}
+#nexo-quick-edit-root.is-closing .nqe-panel {
+  animation: nexoDialogOut 0.15s cubic-bezier(0.4, 0, 1, 1) forwards !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  #nexo-quick-edit-root.is-closing,
+  #nexo-quick-edit-root.is-closing .nqe-panel {
+    animation: none !important;
+  }
 }
 
 /* Solid opaque panel — never see table/page through the card */
@@ -10317,13 +10365,16 @@ body:not(.is-admin) #wsSideMenu li.rail-admin-only {
   will-change: opacity, transform;
 }
 /* Keep stage content width locked to topbar edges (same inset) */
+/* NOTE: layout for .ws-stage is actually controlled via margin-left
+   further down (the `margin-left: calc(...)` block) — this rule's old
+   `left`/`right` values are superseded there and kept out to avoid a
+   second competing positioning system (see audit §2.1/§3). The
+   `transition` declared here is what actually wins the cascade for
+   `.ws-stage`, so it's kept in sync with the property that really
+   moves (`margin-left`) and with the rail's own 0.5s timing so the
+   content glides in step with the sidebar instead of snapping. */
 #view-workspace .ws-stage {
-  left: calc(var(--rail-w, 68px) + 16px) !important;
-  right: 16px !important;
-  transition: left 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
-}
-body.rail-hidden #view-workspace .ws-stage {
-  left: 16px !important;
+  transition: margin-left 0.5s cubic-bezier(0.22, 1, 0.36, 1) !important;
 }
 #view-workspace .topbar-end [hidden] {
   display: none !important;
@@ -11249,7 +11300,10 @@ html.lenis-smooth #view-workspace .ws-stage {
   flex-wrap: wrap;
   gap: 8px;
 }
-#view-workspace #ws-page-search .table-wrap {
+/* Table re-render fade — applied to every workspace table-wrap
+   (History, Search, Parties, Banks, Ledger, Trash), not just Search,
+   so filtering/sorting/refreshing feels consistent everywhere. */
+#view-workspace .table-wrap {
   animation: nexoSearchTableIn 0.28s ease both;
 }
 @keyframes nexoSearchTableIn {
@@ -11257,7 +11311,36 @@ html.lenis-smooth #view-workspace .ws-stage {
   to { opacity: 1; transform: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  #view-workspace #ws-page-search .table-wrap { animation: none; }
+  #view-workspace .table-wrap { animation: none; }
+}
+
+/* Row enter/exit — rows fade+settle in on insert, and a JS-added
+   `.is-leaving` class (see workspace row add/remove helpers) fades
+   + collapses them out before they're actually removed from the DOM. */
+#view-workspace .table tbody tr,
+#view-workspace table.table tbody tr {
+  animation: nexoRowIn 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+#view-workspace .table tbody tr.is-leaving,
+#view-workspace table.table tbody tr.is-leaving {
+  animation: nexoRowOut 0.18s ease both;
+  pointer-events: none;
+}
+@keyframes nexoRowIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes nexoRowOut {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateY(-4px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #view-workspace .table tbody tr,
+  #view-workspace table.table tbody tr,
+  #view-workspace .table tbody tr.is-leaving,
+  #view-workspace table.table tbody tr.is-leaving {
+    animation: none;
+  }
 }
 
 /* =========================================================
@@ -12199,13 +12282,22 @@ html.lenis-smooth #view-workspace .ws-stage-body {
   -webkit-overflow-scrolling: touch;
   box-shadow: none !important;
 }
-/* Lighter row hover — avoid full-row expensive paints */
+/* Lighter row hover — avoid full-row expensive paints.
+   A background-color-only transition is cheap even on large tables
+   (no transform/box-shadow), so it's kept instead of `transition: none`
+   — restores the smooth feel without the original repaint cost. */
 #view-workspace .table tbody tr:hover td {
   background: rgba(245, 230, 211, 0.55) !important;
-  transition: none !important;
+  transition: background-color 0.12s ease !important;
 }
 #view-workspace .table tbody td {
-  transition: none !important;
+  transition: background-color 0.12s ease !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  #view-workspace .table tbody tr:hover td,
+  #view-workspace .table tbody td {
+    transition: none !important;
+  }
 }
 #view-workspace .nexo-pager {
   will-change: auto !important;
@@ -14066,356 +14158,158 @@ body.in-workspace .nexo-dialog-backdrop,
   opacity: 0.78;
 }
 
-/* ===== Ledger UI — WORKSPACE layout, NEXO theme ===== */
-#view-workspace .ledger-panel {
-  padding: 18px 18px 22px !important;
-}
+
+/* ===== Ledger WORKSPACE layout — NEXO theme (from working base) ===== */
+#view-workspace .ledger-panel { width: 100%; max-width: 100%; }
 #view-workspace .ledger-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 14px;
-  margin-bottom: 16px;
+  display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 14px; margin-bottom: 16px;
 }
 #view-workspace .ledger-filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: flex-end;
-  flex: 1 1 auto;
+  display: grid; grid-template-columns: minmax(220px, 1.4fr) minmax(150px, 1fr) minmax(150px, 1fr);
+  gap: 12px; flex: 1 1 560px; min-width: min(100%, 560px); align-items: end;
 }
-#view-workspace .ledger-filters .field {
-  min-width: 150px;
-}
+#view-workspace .ledger-filters .field { min-width: 0; width: 100%; margin: 0; }
 #view-workspace .ledger-filters .field label {
-  display: block;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: #9A8474;
-  margin-bottom: 6px;
-}
-#view-workspace .ledger-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-}
-#view-workspace .ledger-actions .btn.primary {
-  min-width: 132px;
-  height: 40px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-#view-workspace .ledger-kpi-row {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 16px;
-}
-@media (max-width: 900px) {
-  #view-workspace .ledger-kpi-row {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-#view-workspace .ledger-kpi {
-  background: #FFF8ED;
-  border: 1px solid rgba(52, 23, 10, 0.10);
-  border-radius: 14px;
-  padding: 16px 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  box-shadow: 0 1px 0 rgba(255,255,255,0.7) inset;
-}
-#view-workspace .ledger-kpi__label {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: #9A8474;
-}
-#view-workspace .ledger-kpi__value {
-  font-size: 22px;
-  font-weight: 800;
-  color: #34170A;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
-  font-variant-numeric: tabular-nums;
-}
-#view-workspace .ledger-kpi__value.is-dr { color: #a33a2a; }
-#view-workspace .ledger-kpi__value.is-cr { color: #1a6b3c; }
-
-#view-workspace .ledger-table-wrap {
-  width: 100%;
-  overflow-x: auto;
-  border: 1px solid rgba(52, 23, 10, 0.10);
-  border-radius: 14px;
-  background: #FFFBF6;
-}
-#view-workspace .ledger-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-  color: #34170A;
-}
-#view-workspace .ledger-table thead th {
-  text-align: left;
-  padding: 12px 14px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: #9A8474;
-  background: #F7EFE3;
-  border-bottom: 1px solid rgba(52, 23, 10, 0.10);
-  white-space: nowrap;
-}
-#view-workspace .ledger-table tbody td {
-  padding: 12px 14px;
-  border-bottom: 1px solid rgba(52, 23, 10, 0.06);
-  vertical-align: middle;
-  background: #FFFBF6;
-}
-#view-workspace .ledger-table tbody tr:nth-child(even) td {
-  background: #FFF6EA;
-}
-#view-workspace .ledger-table tbody tr:hover td {
-  background: rgba(52, 23, 10, 0.05);
-}
-#view-workspace .ledger-table .num {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-#view-workspace .ledger-table .date-cell {
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-}
-#view-workspace .ledger-table .party-cell,
-#view-workspace .ledger-table .desc-cell {
-  max-width: 160px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-#view-workspace .ledger-table .ref-cell {
-  white-space: nowrap;
-  color: #6B5344;
-}
-#view-workspace .ledger-table .is-dr { color: #a33a2a; font-weight: 650; }
-#view-workspace .ledger-table .is-cr { color: #1a6b3c; font-weight: 650; }
-#view-workspace .ledger-table tfoot td {
-  padding: 12px 14px;
-  font-weight: 800;
-  background: #F3E6D3;
-  border-top: 2px solid rgba(52, 23, 10, 0.16);
-  color: #34170A;
-}
-#view-workspace .ledger-total-row td:first-child {
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  font-size: 12px;
-}
-
-
-/* ===== Unified empty states (WORKSPACE-style panel) ===== */
-#view-workspace .nexo-empty,
-#view-workspace .empty.nexo-empty,
-#view-workspace .empty-state,
-#view-workspace .ledger-table-host .empty,
-#view-workspace .history-table-host .empty,
-#view-workspace .search-table-host .empty,
-#view-workspace .party-table-host .empty {
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
-  min-height: 220px;
-  margin: 8px 0 0;
-  padding: 36px 24px;
-  border-radius: 16px;
-  border: 1px solid rgba(52, 23, 10, 0.08);
-  background: rgba(52, 23, 10, 0.03);
-  box-shadow: none;
-  text-align: center;
-}
-#view-workspace .nexo-empty__inner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  max-width: 420px;
-}
-#view-workspace .nexo-empty .empty-state-title,
-#view-workspace .empty.nexo-empty .empty-state-title,
-#view-workspace .empty-state .empty-state-title,
-#view-workspace .empty-state strong {
-  display: block;
-  font-size: 12.5px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #6B5344;
-  margin: 0;
-}
-#view-workspace .nexo-empty .empty-state-hint,
-#view-workspace .empty.nexo-empty .empty-state-hint,
-#view-workspace .empty-state .empty-state-hint,
-#view-workspace .empty-state span:not(.empty-state-title) {
-  display: block;
-  font-size: 13px;
-  font-weight: 500;
-  color: #9A8474;
-  line-height: 1.45;
-  margin: 0;
-}
-
-/* ===== Ledger filters — fill the line ===== */
-#view-workspace .ledger-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 12px 14px;
-}
-#view-workspace .ledger-filters {
-  display: grid !important;
-  grid-template-columns: minmax(220px, 1.4fr) minmax(150px, 1fr) minmax(150px, 1fr);
-  gap: 12px;
-  flex: 1 1 560px;
-  min-width: min(100%, 560px);
-  align-items: end;
-}
-#view-workspace .ledger-filters .field {
-  min-width: 0 !important;
-  width: 100%;
-  margin: 0;
+  display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.05em;
+  text-transform: uppercase; color: #9A8474; margin-bottom: 6px;
 }
 #view-workspace .ledger-filters .field select,
 #view-workspace .ledger-filters .field input[type="date"],
 #view-workspace .ledger-filters .field input {
-  width: 100% !important;
-  min-width: 0 !important;
-  height: 42px;
-  border-radius: 12px !important;
+  width: 100% !important; min-width: 0 !important; height: 42px; border-radius: 12px !important;
 }
 #view-workspace .ledger-actions {
-  flex: 0 0 auto;
-  margin-left: auto;
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center; flex: 0 0 auto; margin-left: auto;
+}
+#view-workspace .ledger-actions .btn.primary {
+  min-width: 132px; height: 40px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+}
+#view-workspace .ledger-kpi-row {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin: 4px 0 16px;
 }
 @media (max-width: 900px) {
-  #view-workspace .ledger-filters {
-    grid-template-columns: 1fr;
-    flex: 1 1 100%;
-  }
-  #view-workspace .ledger-actions {
-    width: 100%;
-    margin-left: 0;
-  }
-}
-
-
-/* ===== Empty states — always visible full panel ===== */
-#view-workspace .nexo-empty,
-#view-workspace .empty.nexo-empty,
-#view-workspace .party-table-host .empty,
-#view-workspace .ledger-table-host .empty,
-#view-workspace .history-table-host .empty,
-#view-workspace .search-table-host .empty,
-#view-workspace #partyTable .empty,
-#view-workspace #ledgerTable .empty,
-#view-workspace #allTable .empty,
-#view-workspace #searchTable .empty,
-#view-workspace #trashTable .empty {
-  display: flex !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  align-items: center !important;
-  justify-content: center !important;
-  min-height: 240px !important;
-  width: 100% !important;
-  margin: 12px 0 0 !important;
-  padding: 40px 28px !important;
-  border-radius: 16px !important;
-  border: 1px solid rgba(52, 23, 10, 0.08) !important;
-  background: rgba(52, 23, 10, 0.035) !important;
-  box-sizing: border-box !important;
-}
-
-/* ===== Ledger KPIs — WORKSPACE card style, NEXO theme ===== */
-#view-workspace .ledger-kpi-row {
-  display: grid !important;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-  gap: 14px !important;
-  margin: 4px 0 16px !important;
+  #view-workspace .ledger-filters { grid-template-columns: 1fr; flex: 1 1 100%; }
+  #view-workspace .ledger-actions { width: 100%; margin-left: 0; }
+  #view-workspace .ledger-kpi-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 #view-workspace .ledger-kpi {
-  background: #FFFBF6 !important;
-  border: 1px solid rgba(52, 23, 10, 0.10) !important;
-  border-radius: 14px !important;
-  padding: 18px 20px !important;
-  min-height: 88px;
-  box-shadow: 0 1px 2px rgba(52, 23, 10, 0.04);
+  background: #FFFBF6; border: 1px solid rgba(52, 23, 10, 0.10); border-radius: 14px;
+  padding: 18px 20px; min-height: 88px; box-shadow: 0 1px 2px rgba(52, 23, 10, 0.04);
+  display: flex; flex-direction: column; gap: 6px;
 }
 #view-workspace .ledger-kpi__label {
-  font-size: 11px !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.07em !important;
-  text-transform: uppercase !important;
-  color: #9A8474 !important;
-  margin-bottom: 8px;
-  display: block;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: #9A8474;
 }
 #view-workspace .ledger-kpi__value {
-  font-size: 24px !important;
-  font-weight: 800 !important;
-  color: #34170A !important;
-  letter-spacing: -0.02em !important;
-  line-height: 1.1 !important;
-  font-variant-numeric: tabular-nums;
+  font-size: 24px; font-weight: 800; color: #34170A; letter-spacing: -0.02em;
+  line-height: 1.1; font-variant-numeric: tabular-nums;
 }
-
-/* Ledger table full width + total bottom border like WORKSPACE */
+#view-workspace .ledger-kpi__value.is-dr { color: #a33a2a; }
+#view-workspace .ledger-kpi__value.is-cr { color: #1a6b3c; }
 #view-workspace .ledger-table-wrap {
-  width: 100% !important;
-  border: 1px solid rgba(52, 23, 10, 0.10) !important;
-  border-radius: 14px !important;
-  overflow: hidden !important;
-  background: #FFFBF6 !important;
+  width: 100%; overflow-x: auto; border: 1px solid rgba(52, 23, 10, 0.10);
+  border-radius: 14px; background: #FFFBF6;
 }
-#view-workspace .ledger-table {
-  width: 100% !important;
-  border-collapse: collapse !important;
-}
+#view-workspace .ledger-table { width: 100%; border-collapse: collapse; font-size: 13px; color: #34170A; }
 #view-workspace .ledger-table thead th {
-  background: #F5EDE0 !important;
-  border-bottom: 1px solid rgba(52, 23, 10, 0.10) !important;
-  text-align: left !important;
-  padding: 12px 14px !important;
+  text-align: left; padding: 12px 14px; font-size: 11px; font-weight: 700;
+  letter-spacing: 0.05em; text-transform: uppercase; color: #9A8474;
+  background: #F5EDE0; border-bottom: 1px solid rgba(52, 23, 10, 0.10); white-space: nowrap;
 }
 #view-workspace .ledger-table tbody td {
-  padding: 12px 14px !important;
-  border-bottom: 1px solid rgba(52, 23, 10, 0.06) !important;
+  padding: 12px 14px; border-bottom: 1px solid rgba(52, 23, 10, 0.06); vertical-align: middle; background: #FFFBF6;
 }
+#view-workspace .ledger-table tbody tr:nth-child(even) td { background: #FFF6EA; }
+#view-workspace .ledger-table tbody tr:hover td { background: rgba(52, 23, 10, 0.05); }
+#view-workspace .ledger-table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+#view-workspace .ledger-table .date-cell { white-space: nowrap; font-variant-numeric: tabular-nums; }
+#view-workspace .ledger-table .party-cell,
+#view-workspace .ledger-table .desc-cell {
+  max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+#view-workspace .ledger-table .ref-cell { white-space: nowrap; color: #6B5344; }
+#view-workspace .ledger-table .is-dr { color: #a33a2a; font-weight: 650; }
+#view-workspace .ledger-table .is-cr { color: #1a6b3c; font-weight: 650; }
 #view-workspace .ledger-table tfoot td {
-  background: #F3E6D3 !important;
-  border-top: 2px solid #34170A !important;
-  font-weight: 800 !important;
-  padding: 13px 14px !important;
+  padding: 13px 14px; font-weight: 800; background: #F3E6D3;
+  border-top: 2px solid #34170A; color: #34170A;
 }
-#view-workspace .ledger-total-row td {
-  border-bottom: none !important;
+#view-workspace .ledger-total-row td:first-child {
+  text-transform: uppercase; letter-spacing: 0.04em; font-size: 12px;
 }
-#view-workspace .ledger-panel {
+
+/* Empty states */
+#view-workspace .nexo-empty,
+#view-workspace .empty.nexo-empty {
+  display: flex !important; align-items: center; justify-content: center;
+  min-height: 220px; margin: 8px 0 0; padding: 36px 24px; border-radius: 16px;
+  border: 1px solid rgba(52, 23, 10, 0.08); background: rgba(52, 23, 10, 0.03); text-align: center;
+}
+#view-workspace .nexo-empty__inner { display: flex; flex-direction: column; align-items: center; gap: 8px; max-width: 420px; }
+#view-workspace .nexo-empty .empty-state-title {
+  font-size: 12.5px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #6B5344;
+}
+#view-workspace .nexo-empty .empty-state-hint { font-size: 13px; font-weight: 500; color: #9A8474; line-height: 1.45; }
+
+
+/* Ledger party select — same NexoSelect look as Search bank */
+#view-workspace #ws-page-ledger .ledger-filters .field {
+  position: relative;
+}
+#view-workspace #ws-page-ledger .nexo-select,
+#view-workspace #ws-page-ledger .nexo-select__btn,
+#view-workspace #ws-page-ledger .ledger-filters .field .nexo-select {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+#view-workspace #ws-page-ledger .nexo-select__btn {
+  height: 42px !important;
+  min-height: 42px !important;
+  border-radius: 12px !important;
+  background: #FFFBF6 !important;
+  border: 1px solid rgba(52, 23, 10, 0.12) !important;
+  color: #34170A !important;
+  font-weight: 600 !important;
+  justify-content: space-between !important;
+}
+#view-workspace #ws-page-ledger .nexo-select__menu {
+  background: #FFF8ED !important;
+  border: 1px solid rgba(52, 23, 10, 0.12) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 12px 32px rgba(52, 23, 10, 0.12) !important;
+  z-index: 50 !important;
+}
+#view-workspace #ws-page-ledger .nexo-select__option.is-active,
+#view-workspace #ws-page-ledger .nexo-select__option:hover {
+  background: rgba(52, 23, 10, 0.08) !important;
+}
+
+
+/* Search bank select — menu polish (match Find Transactions dropdown) */
+#view-workspace #ws-page-search .nexo-select {
   width: 100%;
 }
-#view-workspace #ws-page-ledger .nexo-page-panel {
-  width: 100%;
-  max-width: 100%;
+#view-workspace #ws-page-search .nexo-select__btn {
+  height: 42px;
+  border-radius: 12px;
+  background: #FFFBF6;
+  border: 1px solid rgba(52, 23, 10, 0.12);
+  font-weight: 600;
 }
-#view-workspace .parties-summary:empty,
-#view-workspace .parties-summary[hidden] {
-  display: none !important;
+#view-workspace #ws-page-search .nexo-select__menu {
+  background: #FFF8ED;
+  border: 1px solid rgba(52, 23, 10, 0.12);
+  border-radius: 12px;
+  box-shadow: 0 14px 36px rgba(52, 23, 10, 0.14);
+  max-height: 280px;
+  overflow-y: auto;
+}
+#view-workspace #ws-page-search .nexo-select__option {
+  padding: 10px 14px;
+  font-weight: 600;
+  color: #34170A;
+}
+#view-workspace #ws-page-search .nexo-select__option.is-active,
+#view-workspace #ws-page-search .nexo-select__option:hover {
+  background: rgba(52, 23, 10, 0.08);
 }

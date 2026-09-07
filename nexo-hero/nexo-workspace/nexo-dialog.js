@@ -67,20 +67,31 @@
   }
 
   function close(ok) {
-    if (!root || root.hidden) return;
-    root.hidden = true;
+    if (!root || root.hidden || root.classList.contains("is-closing")) return;
     document.body.classList.remove("nexo-overlay-open");
     var fn = resolveFn;
     var inputEl = root.querySelector("#nexo-dialog-input");
     var value = inputEl && !inputEl.hidden ? inputEl.value : null;
     resolveFn = null;
-    busy = false;
-    if (fn) fn(ok ? (value !== null ? value : true) : (value !== null ? null : false));
-    // A second confirm()/alert()/prompt() called while this one was open is
-    // queued, not dropped — run it now that the dialog is free.
-    if (queue.length) {
-      var next = queue.shift();
-      showDialog(next.message, next.opts, next.resolve);
+    // Mirror the entrance animation in reverse before actually hiding,
+    // so closing isn't an abrupt cut right after a smooth entrance.
+    root.classList.add("is-closing");
+    var finish = function () {
+      root.hidden = true;
+      root.classList.remove("is-closing");
+      busy = false;
+      if (fn) fn(ok ? (value !== null ? value : true) : (value !== null ? null : false));
+      // A second confirm()/alert()/prompt() called while this one was open is
+      // queued, not dropped — run it now that the dialog is free.
+      if (queue.length) {
+        var next = queue.shift();
+        showDialog(next.message, next.opts, next.resolve);
+      }
+    };
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      finish();
+    } else {
+      window.setTimeout(finish, 150);
     }
   }
 

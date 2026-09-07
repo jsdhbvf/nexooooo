@@ -8,11 +8,11 @@
   var KEY = "nexo_report_print_settings";
   var DEFAULTS = {
     fontFamily: "'Inter', 'Segoe UI', system-ui, Arial, sans-serif",
-    titleSize: 26,
+    titleSize: 27,
     subtitleSize: 12,
     headerSize: 10.5,
     headerWeight: 700,
-    bodySize: 11,
+    bodySize: 11.5,
     metaSize: 11.5,
     letterSpacing: "normal",
     titleAlign: "center",
@@ -97,25 +97,26 @@
   function getPrintStyles() {
     var s = settings();
     var fontFamily = s.fontFamily || DEFAULTS.fontFamily;
-    var titleSize = s.titleSize != null ? s.titleSize : 26;
+    var titleSize = s.titleSize != null ? s.titleSize : 27;
     var subtitleSize = s.subtitleSize != null ? s.subtitleSize : 12;
     var headerSize = s.headerSize != null ? s.headerSize : 10.5;
     var headerWeight = s.headerWeight != null ? s.headerWeight : 700;
-    var bodySize = s.bodySize != null ? s.bodySize : 11;
+    var bodySize = s.bodySize != null ? s.bodySize : 11.5;
     var metaSize = s.metaSize != null ? s.metaSize : 11.5;
-    var ls = s.letterSpacing === "wide" ? "0.04em" : "normal";
+    var lsWide = s.letterSpacing === "wide";
+    var lsVal = lsWide ? "0.07em" : "0.035em";
     var cellVP = s.cellVPadding != null ? s.cellVPadding : 7;
     var cellHP = s.cellHPadding != null ? s.cellHPadding : 8;
     var colAlign = s.colAlign || "center";
     var rowH = s.rowHeight != null ? s.rowHeight : 28;
     var rowBW = s.rowBorderWidth != null ? s.rowBorderWidth : 1;
-    var rowBC = s.rowBorderColor || "#000";
+    var rowBC = s.rowBorderColor || "#000000";
     var hBW = s.headerBorderWidth != null ? s.headerBorderWidth : 1.5;
-    var hBC = s.headerBorderColor || "#000";
+    var hBC = s.headerBorderColor || "#000000";
     var headerBg = s.headerBg || "#f0f0f0";
-    var bodyText = s.bodyTextColor || "#111";
-    var headerText = s.headerTextColor || "#111";
-    var accent = s.accentColor || "#111";
+    var bodyText = s.bodyTextColor || "#111111";
+    var headerText = s.headerTextColor || "#111111";
+    var accent = s.accentColor || "#111111";
     var alt = s.altRowShading ? (s.altRowColor || "#f5f5f5") : "transparent";
     var mT = s.marginTop != null ? s.marginTop : 12;
     var mR = s.marginRight != null ? s.marginRight : 10;
@@ -124,35 +125,40 @@
     var page = s.pageSize || "A4";
     var orient = s.orientation || "portrait";
     var scale = (s.scale != null ? s.scale : 100) / 100;
-    var textWrap = s.autoFitCells !== false || s.textWrap === false
+    var textWrap = (s.autoFitCells !== false && s.textWrap !== true)
       ? "white-space:nowrap;overflow:hidden;text-overflow:ellipsis"
       : "white-space:normal;word-break:break-word";
     var outer = s.outerBorder !== false ? ("border:" + rowBW + "px solid " + rowBC) : "border:none";
     var colDiv = s.colDividers !== false ? ("border-right:" + rowBW + "px solid " + rowBC) : "border-right:none";
     var rowBorder = s.rowBorder !== false ? ("border-bottom:" + rowBW + "px solid " + rowBC) : "border-bottom:none";
+    var scaleStyle = scale !== 1 ? ("transform:scale(" + scale + ");transform-origin:top left;width:" + (100 / scale) + "%;") : "";
 
     return (
       "<style>" +
       "@page{size:" + page + " " + orient + ";margin:" + mT + "mm " + mR + "mm " + mB + "mm " + mL + "mm}" +
+      "*,*::before,*::after{box-sizing:border-box}" +
       "html,body{margin:0;padding:0;background:#fff;color:" + bodyText + ";font-family:" + fontFamily + ";-webkit-print-color-adjust:exact;print-color-adjust:exact}" +
-      ".print-page{padding:0;margin:0;transform:scale(" + scale + ");transform-origin:top left}" +
-      ".print-header{margin:0 0 14px;text-align:" + (s.titleAlign || "center") + ";border-bottom:2px solid " + accent + ";padding-bottom:10px}" +
-      ".print-brand{font-size:" + metaSize + "px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:" + accent + ";margin:0 0 6px}" +
-      ".print-brand .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:" + accent + ";margin-right:6px;vertical-align:middle}" +
-      ".print-title{margin:0 0 4px;font-size:" + titleSize + "px;font-weight:800;letter-spacing:-0.02em;color:" + bodyText + "}" +
-      ".print-subtitle{margin:0;font-size:" + subtitleSize + "px;font-weight:600;color:#444}" +
-      ".print-meta{margin:10px 0 14px;font-size:" + metaSize + "px;font-weight:600;color:#333;display:flex;flex-wrap:wrap;gap:8px 18px}" +
-      ".print-meta span{white-space:nowrap}" +
-      "table.print-table{width:100%;border-collapse:collapse;" + outer + ";table-layout:auto}" +
-      "table.print-table th,table.print-table td{padding:" + cellVP + "px " + cellHP + "px;font-size:" + bodySize + "px;text-align:" + colAlign + ";vertical-align:middle;letter-spacing:" + ls + ";" + textWrap + ";" + colDiv + ";" + rowBorder + ";min-height:" + rowH + "px}" +
-      "table.print-table th:last-child,table.print-table td:last-child{border-right:none}" +
-      "table.print-table thead th{background:" + headerBg + ";color:" + headerText + ";font-size:" + headerSize + "px;font-weight:" + headerWeight + ";border-bottom:" + hBW + "px solid " + hBC + ";text-transform:uppercase;letter-spacing:0.04em}" +
-      "table.print-table tbody tr:nth-child(even) td{background:" + alt + "}" +
-      "table.print-table td.num,table.print-table th.num{text-align:right;font-variant-numeric:tabular-nums}" +
-      "table.print-table td.cell-wrap,table.print-table th.cell-wrap{white-space:normal;word-break:break-word;overflow:visible;text-overflow:clip}" +
-      ".print-foot{margin-top:14px;font-size:" + metaSize + "px;color:#555;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}" +
-      ".print-total{font-weight:800;color:" + bodyText + "}" +
-      "@media print{body{margin:0}.print-page{transform:none}}" +
+      "body{padding:22px;" + scaleStyle + "}" +
+      ".print-page{max-width:100%;margin:0 auto}" +
+      ".print-header{margin-bottom:18px;padding-bottom:12px;border-bottom:1.5px solid " + rowBC + ";text-align:" + (s.titleAlign || "center") + "}" +
+      ".print-brand{display:flex;align-items:center;gap:7px;margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:" + bodyText + ";justify-content:" + ((s.titleAlign||"center")==="center"?"center":(s.titleAlign)==="right"?"flex-end":"flex-start") + "}" +
+      ".print-brand .dot{width:8px;height:8px;border-radius:50%;background:" + accent + ";flex:0 0 auto}" +
+      ".print-title{margin:0 0 6px;font-size:" + titleSize + "px;font-weight:800;line-height:1.15;text-transform:uppercase;letter-spacing:" + lsVal + ";color:" + bodyText + ";text-align:" + (s.titleAlign||"center") + "}" +
+      ".print-subtitle{margin:0;color:#555;font-size:" + subtitleSize + "px;line-height:1.45;font-weight:500;text-align:" + (s.titleAlign||"center") + "}" +
+      ".print-meta{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0 16px;justify-content:" + ((s.titleAlign||"center")==="center"?"center":(s.titleAlign)==="right"?"flex-end":"flex-start") + "}" +
+      ".print-meta span,.print-meta div{background:#fff;border:1px solid #e5e5e5;border-radius:8px;padding:7px 12px;color:" + bodyText + ";font-size:" + metaSize + "px;font-weight:600}" +
+      ".print-table{width:100%;border-collapse:collapse;" + outer + ";table-layout:auto}" +
+      ".print-table th{background:" + headerBg + ";color:" + headerText + ";font-size:" + headerSize + "px;font-weight:" + headerWeight + ";letter-spacing:0.04em;text-transform:uppercase;text-align:" + colAlign + ";padding:" + cellVP + "px " + cellHP + "px;height:" + rowH + "px;border-bottom:" + hBW + "px solid " + hBC + ";" + colDiv + ";vertical-align:middle}" +
+      ".print-table th:last-child{border-right:none}" +
+      ".print-table td{font-size:" + bodySize + "px;color:" + bodyText + ";text-align:" + colAlign + ";padding:" + cellVP + "px " + cellHP + "px;height:" + rowH + "px;" + rowBorder + ";" + colDiv + ";vertical-align:middle;" + textWrap + "}" +
+      ".print-table td:last-child{border-right:none}" +
+      ".print-table tbody tr:nth-child(even) td{background:" + alt + "}" +
+      ".print-table .num{font-variant-numeric:tabular-nums;white-space:nowrap}" +
+      ".print-table .cell-wrap{white-space:normal;word-break:break-word}" +
+      ".print-foot{display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding-top:10px;border-top:1.5px solid " + rowBC + ";font-size:" + metaSize + "px;font-weight:600;color:" + bodyText + "}" +
+      ".print-foot .print-total{font-weight:800}" +
+      ".print-ts{margin-top:8px;font-size:10px;color:#666;text-align:right}" +
+      "@media print{body{padding:0} .print-page{width:100%}}" +
       "</style>"
     );
   }
@@ -181,24 +187,51 @@
       metaBlock + tableHtml + foot +
       "</div></body></html>";
 
-    var w = global.open("", "_blank", "noopener,noreferrer,width=960,height=720");
+    /* Never use noopener — it blocks document.write → blank about:blank */
+    var w = null;
+    try {
+      w = global.open("", "_blank", "width=960,height=720");
+    } catch (e0) { w = null; }
+
+    if (w) {
+      try {
+        w.document.open();
+        w.document.write(html);
+        w.document.close();
+      } catch (e1) {
+        try { w.close(); } catch (eC) {}
+        w = null;
+      }
+    }
+
+    if (!w) {
+      try {
+        var blob = new Blob([html], { type: "text/html;charset=utf-8" });
+        var url = URL.createObjectURL(blob);
+        w = global.open(url, "_blank");
+        if (w) {
+          setTimeout(function () {
+            try { URL.revokeObjectURL(url); } catch (eR) {}
+          }, 60000);
+        }
+      } catch (e2) { w = null; }
+    }
+
     if (!w) {
       if (global.NexoData && global.NexoData.notify) {
         global.NexoData.notify("Allow pop-ups to print reports.", { kind: "warning" });
       }
       return null;
     }
-    w.document.open();
-    w.document.write(html);
-    w.document.close();
+
     var printed = false;
     function doPrint() {
       if (printed) return;
       printed = true;
       try { w.focus(); w.print(); } catch (e) {}
     }
-    setTimeout(doPrint, 350);
-    w.onload = function () { setTimeout(doPrint, 120); };
+    setTimeout(doPrint, 400);
+    try { w.onload = function () { setTimeout(doPrint, 150); }; } catch (eL) {}
     return w;
   }
 
@@ -233,14 +266,15 @@
       "</tr></thead>";
     var bal = 0;
     var body = "<tbody>" + (entries || []).map(function (e) {
-      bal += (e.credit || 0) - (e.debit || 0);
+      bal += (e.debit || 0) - (e.credit || 0);
+      var run = bal > 0 ? money(bal) + " DR" : bal < 0 ? money(Math.abs(bal)) + " CR" : money(0);
       return "<tr>" +
         "<td>" + esc(formatDate(e.date)) + "</td>" +
         '<td class="num">' + (e.credit ? money(e.credit) : "—") + "</td>" +
         '<td class="num">' + (e.debit ? money(e.debit) : "—") + "</td>" +
-        '<td class="cell-wrap">' + esc(e.desc) + "</td>" +
-        "<td>" + esc(e.ref || "") + "</td>" +
-        '<td class="num">' + money(bal) + "</td></tr>";
+        '<td class="cell-wrap">' + esc(e.desc || e.description || "") + "</td>" +
+        "<td>" + esc(e.ref || e.reference || "") + "</td>" +
+        '<td class="num">' + run + "</td></tr>";
     }).join("") + "</tbody>";
     return '<table class="print-table">' + head + body + "</table>";
   }
@@ -277,7 +311,7 @@
     entries = entries || [];
     var cred = 0, deb = 0;
     entries.forEach(function (e) { cred += e.credit || 0; deb += e.debit || 0; });
-    var bal = cred - deb;
+    var bal = deb - cred; /* WORKSPACE: debit − credit */
     var range = (from || to) ? ((from || "…") + " → " + (to || "…")) : "All dates";
     var meta =
       "<span><strong>Party:</strong> " + esc(party) + "</span>" +
@@ -505,7 +539,21 @@
     });
   }
 
+  function goPrintSettings() {
+    try {
+      if (global.NexoWorkspace && global.NexoWorkspace.go) {
+        global.NexoWorkspace.go("settings");
+        setTimeout(function () {
+          var panel = document.getElementById("printSettingsPanel");
+          if (panel && panel.scrollIntoView) panel.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 120);
+        return;
+      }
+    } catch (e) {}
+  }
+
   global.NexoPrint = {
+    openSettings: goPrintSettings,
     DEFAULTS: DEFAULTS,
     load: loadSettings,
     save: saveSettings,

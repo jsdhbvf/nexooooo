@@ -86,6 +86,10 @@ body.in-tools {
 }
 .tools-shell__btn:hover { background: rgba(255, 242, 224, 0.08); }
 .tools-shell__btn svg { width: 15px; height: 15px; }
+.tools-shell__btn {
+  transition: background 0.2s cubic-bezier(0.22, 1, 0.36, 1), transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.tools-shell__btn:active { transform: scale(0.96); }
 
 .tools-topbar {
   position: absolute;
@@ -198,6 +202,7 @@ body.in-tools {
   font-family: Inter, system-ui, sans-serif;
   font-size: 15px;
   box-sizing: border-box;
+  transition: border-color 0.2s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.2s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .tools-field textarea {
   min-height: 120px;
@@ -238,8 +243,13 @@ body.in-tools {
   letter-spacing: 0.1em;
   text-transform: uppercase;
   cursor: pointer;
+  transition:
+    background 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.2s cubic-bezier(0.22, 1, 0.36, 1);
 }
-.tools-btn:hover { background: #f5e6d3; }
+.tools-btn:hover { background: #f5e6d3; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(52, 23, 10, 0.1); }
+.tools-btn:active { transform: translateY(0) scale(0.97); box-shadow: none; }
 .tools-btn.primary {
   background: #34170a;
   border-color: #34170a;
@@ -296,7 +306,9 @@ body.in-tools {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   cursor: pointer;
+  transition: color 0.15s ease, opacity 0.15s ease;
 }
+.tools-tally-row button:hover { color: #6e1c1c; }
 
 @media (max-width: 900px) {
   body.in-tools { --content-gutter: 12px; }
@@ -384,5 +396,46 @@ body.in-tools {
   .tools-topbar {
     left: 12px !important;
     right: 12px !important;
+  }
+}
+
+/* =========================================================
+   MOTION BASELINE — brings Tools up to the same standard as
+   the rest of the app (audit §2.9): the screen fades/settles in
+   on open, and cards enter with a small stagger, using the same
+   duration/easing variables as the workspace where available.
+   ========================================================= */
+#view-tools.is-on {
+  animation: toolsScreenIn 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes toolsScreenIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.tools-card {
+  animation: toolsCardIn 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.tools-card:nth-of-type(1) { animation-delay: 0.02s; }
+.tools-card:nth-of-type(2) { animation-delay: 0.06s; }
+.tools-card:nth-of-type(3) { animation-delay: 0.1s; }
+.tools-card:nth-of-type(4) { animation-delay: 0.14s; }
+@keyframes toolsCardIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+.tools-result {
+  transition: background 0.2s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  #view-tools.is-on,
+  .tools-card,
+  .tools-shell__btn,
+  .tools-field input,
+  .tools-field textarea,
+  .tools-field select,
+  .tools-btn,
+  .tools-tally-row button {
+    animation: none !important;
+    transition: none !important;
   }
 }

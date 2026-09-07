@@ -184,11 +184,20 @@
   }
 
   function close() {
-    if (!root) return;
-    root.hidden = true;
+    if (!root || root.hidden || root.classList.contains("is-closing")) return;
     document.body.classList.remove("nexo-overlay-open");
-    slipId = null;
-    setError("");
+    root.classList.add("is-closing");
+    var finish = function () {
+      root.hidden = true;
+      root.classList.remove("is-closing");
+      slipId = null;
+      setError("");
+    };
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      finish();
+    } else {
+      window.setTimeout(finish, 150);
+    }
   }
 
   function open(slip, opts) {
@@ -226,6 +235,7 @@
     }
 
     root.hidden = false;
+    root.classList.remove("is-closing");
     document.body.classList.add("nexo-overlay-open");
     setTimeout(function () {
       var f = $("nqe-from");

@@ -13,61 +13,6 @@
   var D = global.NexoData;
   if (!D) return;
 
-  /** Same source as Dashboard — prefer non-empty slips across both storage keys */
-  function pagesLoadDb() {
-    var best = null;
-    var bestN = -1;
-    function consider(db) {
-      if (!db || typeof db !== "object") return;
-      var n = Array.isArray(db.slips) ? db.slips.length : 0;
-      if (n > bestN) { best = db; bestN = n; }
-    }
-    try {
-      if (global.NexoData && typeof global.NexoData.load === "function") {
-        consider(global.NexoData.load());
-      }
-    } catch (e) {}
-    try {
-      var raw1 = localStorage.getItem("nexo_tm_v1");
-      if (raw1) consider(JSON.parse(raw1));
-    } catch (e1) {}
-    try {
-      var raw2 = localStorage.getItem("bankSlipManager_v2");
-      if (raw2) consider(JSON.parse(raw2));
-    } catch (e2) {}
-    if (best) return best;
-    return { slips: [], deletedSlips: [], parties: [], banks: [] };
-  }
-  function pagesLoadSlips() {
-    /* Match workspace.js loadSlips exactly */
-    try {
-      if (global.NexoData && typeof global.NexoData.load === "function") {
-        var db = global.NexoData.load();
-        if (db && Array.isArray(db.slips) && db.slips.length) return db.slips.slice();
-      }
-    } catch (e) {}
-    try {
-      var raw = localStorage.getItem("nexo_tm_v1") || localStorage.getItem("bankSlipManager_v2");
-      if (raw) {
-        var parsed = JSON.parse(raw);
-        if (parsed && Array.isArray(parsed.slips) && parsed.slips.length) return parsed.slips.slice();
-      }
-    } catch (e2) {}
-    /* Last resort: whichever store has more slips */
-    var db2 = pagesLoadDb();
-    return Array.isArray(db2.slips) ? db2.slips.slice() : [];
-  }
-  function slipDateKey(s) {
-    var d = String((s && s.date) || s || "").trim();
-    if (/^\d{4}-\d{2}-\d{2}/.test(d)) return d.slice(0, 10);
-    var m = /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/.exec(d);
-    if (m) {
-      var y = m[3].length === 2 ? "20" + m[3] : m[3];
-      return y + "-" + String(m[2]).padStart(2, "0") + "-" + String(m[1]).padStart(2, "0");
-    }
-    return d.slice(0, 10);
-  }
-
   var PAGE_SIZE_DEFAULT = 10;
   var pageSize = { search: 10, history: 10, trash: 10, parties: 10, banks: 10, ledger: 10 };
   var searchPage = 0;
@@ -206,7 +151,7 @@
   }
 
   function openSlipAttachments(slipId) {
-    var db = (typeof loadDb === 'function' ? loadDb() : D.load());
+    var db = loadDb();
     var slip = (db.slips || []).concat(db.trash || []).find(function (x) { return x && String(x.id) === String(slipId); });
     if (!slip || !slip.attachments || !slip.attachments.length) {
       notify("No attachments on this slip");
@@ -502,7 +447,7 @@ function titledCell(value, cls) {
   }
 
   function filterSlips(filters) {
-    var list = pagesLoadSlips();
+    var list = (D.load().slips || []).slice();
     filters = filters || {};
     var totalAll = list.length;
     if (filters.globalQuery) {
@@ -520,8 +465,8 @@ function titledCell(value, cls) {
       var fd = filters.fromDate || "";
       var td = filters.toDate || "";
       if (fd && td && fd > td) { var _sw = fd; fd = td; td = _sw; }
-      if (fd) list = list.filter(function (s) { return slipDateKey(s) >= fd; });
-      if (td) list = list.filter(function (s) { return slipDateKey(s) <= td; });
+      if (fd) list = list.filter(function (s) { return String(s.date || "") >= fd; });
+      if (td) list = list.filter(function (s) { return String(s.date || "") <= td; });
       if (filters.party) {
         var q = filters.party.toLowerCase();
         var side = filters.partySide || "either";
@@ -654,7 +599,7 @@ function titledCell(value, cls) {
     searchPage = pg.page;
     var totalAmt = list.reduce(function (a, s) { return a + (Number(s.amount) || 0); }, 0);
     var pageAmt = pg.slice.reduce(function (a, s) { return a + (Number(s.amount) || 0); }, 0);
-    var totalAll = list._totalAll || pagesLoadSlips().length;
+    var totalAll = list._totalAll || (D.load().slips || []).length;
     setMeta("searchMeta", pg.total + " results");
     setMeta("topbarSearchMeta", pg.total + " results");
     var sum = $("searchSummary");
@@ -678,7 +623,7 @@ function titledCell(value, cls) {
     var host = $("searchTable");
     if (host) {
       if (!pg.total) {
-        var totalSlips = pagesLoadSlips().length;
+        var totalSlips = (D.load().slips || []).length;
         if (queried || totalSlips > 0) {
           host.innerHTML =
             '<div class="empty empty-search">' +
@@ -828,7 +773,7 @@ function historyRangeBounds(range) {
     if (isFinite(amin) && amt < amin) return false;
     if (isFinite(amax) && amt > amax) return false;
     var bounds = historyRangeBounds(f.range || "all");
-    var sd = slipDateKey(s);
+    var sd = String(s.date || "").slice(0, 10);
     if (bounds.from && sd && sd < bounds.from) return false;
     if (bounds.to && sd && sd > bounds.to) return false;
     return true;
@@ -903,23 +848,13 @@ function historyRangeBounds(range) {
 
   function renderHistory(page) {
     if (page == null) page = historyPage;
-    /* Prefer dedicated history search input; topbar only when user typed while on History (historyQuery already set) */
     var histIn = $("historySearchInput");
+    var topIn = $("topSearchInput");
     if (histIn) historyQuery = String(histIn.value || "").trim();
-    /* Dead filter-bar fields may linger — ignore bank/from/to/amounts when bar is gone */
-    if (!$("historyFiltersBar")) {
-      historyFilters.bank = "";
-      historyFilters.from = "";
-      historyFilters.to = "";
-      historyFilters.amountMin = "";
-      historyFilters.amountMax = "";
-      historyFilters.remarks = "";
-      historyFilters.slip = "";
-      historyFilters.fromDate = "";
-      historyFilters.toDate = "";
-      historyFilters.range = "all";
+    else if (topIn && document.getElementById("ws-page-all") && document.getElementById("ws-page-all").classList.contains("is-active")) {
+      historyQuery = String(topIn.value || "").trim();
     }
-    var list = pagesLoadSlips();
+    var list = (D.load().slips || []).slice();
     list = list.filter(slipMatchesHistoryFilters);
     sortSlips(list, historySort);
     updateHistoryChipLabels();
@@ -1106,12 +1041,12 @@ function historyRangeBounds(range) {
       if (isFrom) credit += amt;
       if (isTo) debit += amt;
     });
-    /* net for CR/DR: credit - debit (positive = CR) */
+    /* positive balance = CR */
     return { slips: slipsN, debit: debit, credit: credit, balance: credit - debit };
   }
 
   function renderParties() {
-    var db = pagesLoadDb();
+    var db = D.load();
     var q = (($("partyFilter") && $("partyFilter").value) || "").trim().toLowerCase();
     var names = {};
     (db.parties || []).forEach(function (p) { names[String(p)] = true; });
@@ -1155,18 +1090,12 @@ function historyRangeBounds(range) {
     });
     var sumEl = $("partiesSummary");
     if (sumEl) {
-      if (!rows.length) {
-        sumEl.innerHTML = "";
-        sumEl.hidden = true;
-      } else {
-        sumEl.hidden = false;
-        sumEl.innerHTML =
-          '<span><strong>' + rows.length + '</strong> parties</span>' +
-          '<span><strong>' + sumSlips + '</strong> slips</span>' +
-          '<span>Debit <strong>' + money(sumDebit) + '</strong></span>' +
-          '<span>Credit <strong>' + money(sumCredit) + '</strong></span>' +
-          '<span>Net <strong>' + formatBalCRDR(sumCredit - sumDebit) + '</strong></span>';
-      }
+      sumEl.innerHTML =
+        '<span><strong>' + rows.length + '</strong> parties</span>' +
+        '<span><strong>' + sumSlips + '</strong> slips</span>' +
+        '<span>Debit <strong>' + money(sumDebit) + '</strong></span>' +
+        '<span>Credit <strong>' + money(sumCredit) + '</strong></span>' +
+        '<span>Net <strong>' + formatBalCRDR(sumCredit - sumDebit) + '</strong></span>';
     }
 
     // filter chips active state
@@ -1386,90 +1315,29 @@ function historyRangeBounds(range) {
     if (!sel) return;
     var cur = sel.value;
     var names = {};
-    var counts = {};
-    var db = pagesLoadDb();
-    (db.parties || []).forEach(function (p) { names[String(p)] = true; counts[String(p)] = counts[String(p)] || 0; });
+    var db = D.load();
+    (db.parties || []).forEach(function (p) { names[String(p)] = true; });
     (db.slips || []).forEach(function (s) {
-      if (s.from) { names[s.from] = true; counts[s.from] = (counts[s.from] || 0) + 1; }
-      if (s.to) { names[s.to] = true; counts[s.to] = (counts[s.to] || 0) + 1; }
+      if (s.from) names[s.from] = true;
+      if (s.to) names[s.to] = true;
     });
     var list = Object.keys(names).sort(function (a, b) { return a.localeCompare(b); });
     sel.innerHTML = '<option value="">Select party</option>' + list.map(function (n) {
       return '<option value="' + esc(n) + '">' + esc(n) + "</option>";
     }).join("");
-    /* Prefer current selection; else first party with the most slips (e.g. BIN ISMAIL SUKKUR) */
-    if (cur && names[cur]) {
-      sel.value = cur;
-    } else {
-      var best = "";
-      var bestN = -1;
-      list.forEach(function (n) {
-        var c = counts[n] || 0;
-        if (c > bestN) { bestN = c; best = n; }
-      });
-      if (best && bestN > 0) sel.value = best;
-      else sel.value = "";
-    }
+    /* Keep selection only if still valid — never auto-pick a party */
+    if (cur && names[cur]) sel.value = cur;
+    else sel.value = "";
     if (global.NexoSelect && global.NexoSelect.enhance) global.NexoSelect.enhance(sel);
     if (global.NexoSelect && global.NexoSelect.refreshAll) global.NexoSelect.refreshAll();
   }
 
-  /* WORKSPACE-aligned ledger: From=Credit, To=Debit; running bal = debit - credit */
-  function slipLedgerEntries(party) {
-    var q = String(party || "").toLowerCase();
-    var entries = [];
-    if (!q) return entries;
-    pagesLoadSlips().forEach(function (s) {
-      var amt = Number(s.amount) || 0;
-      var ref = String(s.serialNo || s.slipNo || "").trim();
-      var from = String(s.from || "");
-      var to = String(s.to || "");
-      var desc = String(s.remarks || "").trim();
-      var bank = String(s.bank || "");
-      if (from.toLowerCase() === q) {
-        entries.push({
-          id: "s" + s.id,
-          date: s.date,
-          type: "credit",
-          debit: 0,
-          credit: amt,
-          description: desc,
-          reference: ref,
-          bank: bank,
-          fromParty: from,
-          toParty: to,
-          sort: s.id
-        });
-      }
-      if (to.toLowerCase() === q) {
-        entries.push({
-          id: "s" + s.id + "t",
-          date: s.date,
-          type: "debit",
-          debit: amt,
-          credit: 0,
-          description: desc,
-          reference: ref,
-          bank: bank,
-          fromParty: from,
-          toParty: to,
-          sort: s.id
-        });
-      }
-    });
-    return entries;
-  }
-
   function renderLedger() {
-    var partyEl = $("ledgerParty");
+    var party = ($("ledgerParty") && $("ledgerParty").value) || "";
+    var fromVal = ($("ledgerFrom") && $("ledgerFrom").value) || "";
+    var toVal = ($("ledgerTo") && $("ledgerTo").value) || "";
     var sumEl = $("ledgerSummary");
     var tableEl = $("ledgerTable");
-    var fromEl = $("ledgerFrom");
-    var toEl = $("ledgerTo");
-    var party = partyEl ? partyEl.value : "";
-    var fromVal = fromEl ? fromEl.value : "";
-    var toVal = toEl ? toEl.value : "";
-
     if (!party) {
       if (sumEl) { sumEl.innerHTML = ""; sumEl.hidden = true; }
       if (tableEl) tableEl.innerHTML = emptyHtml("Select a party", "Choose a party and date range, then view ledger.");
@@ -1479,30 +1347,27 @@ function historyRangeBounds(range) {
     }
     if (sumEl) sumEl.hidden = false;
 
-    function toISODate(d) {
-      d = String(d || "").trim();
-      if (!d) return "";
-      if (/^\d{4}-\d{2}-\d{2}/.test(d)) return d.slice(0, 10);
-      var m = d.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})$/);
-      if (m) {
-        var dd = m[1].padStart(2, "0");
-        var mm = m[2].padStart(2, "0");
-        var yy = m[3];
-        if (yy.length === 2) yy = (Number(yy) >= 70 ? "19" : "20") + yy;
-        return yy + "-" + mm + "-" + dd;
+    /* WORKSPACE logic: From → Credit, To → Debit; running = debit − credit */
+    var low = party.toLowerCase();
+    var entries = [];
+    (D.load().slips || []).forEach(function (s) {
+      var dt = String(s.date || "");
+      if (fromVal && dt && dt < fromVal) return;
+      if (toVal && dt && dt > toVal) return;
+      var amt = Number(s.amount) || 0;
+      var ref = String(s.serialNo || s.slipNo || "").trim() || serialOf(s);
+      var from = String(s.from || "");
+      var to = String(s.to || "");
+      var desc = String(s.remarks || "").trim();
+      if (from.toLowerCase() === low) {
+        entries.push({ date: dt, debit: 0, credit: amt, description: desc, reference: ref, fromParty: from, toParty: to, id: s.id });
       }
-      return d.slice(0, 10);
-    }
-    var entries = slipLedgerEntries(party).filter(function (x) {
-      var dt = toISODate(x.date);
-      var f = toISODate(fromVal);
-      var t = toISODate(toVal);
-      if (f && dt && dt < f) return false;
-      if (t && dt && dt > t) return false;
-      return true;
+      if (to.toLowerCase() === low) {
+        entries.push({ date: dt, debit: amt, credit: 0, description: desc, reference: ref, fromParty: from, toParty: to, id: s.id });
+      }
     });
     entries.sort(function (a, b) {
-      return String(a.date || "").localeCompare(String(b.date || "")) || ((a.sort || 0) - (b.sort || 0));
+      return String(a.date).localeCompare(String(b.date)) || ((a.id || 0) - (b.id || 0));
     });
 
     var totalDebit = 0, totalCredit = 0, bal = 0;
@@ -1535,7 +1400,6 @@ function historyRangeBounds(range) {
         '<div class="ledger-kpi"><span class="ledger-kpi__label">Entries</span><span class="ledger-kpi__value">' + entries.length + "</span></div>" +
         "</div>";
     }
-
     setMeta("ledgerMeta", entries.length + " entries");
     setMeta("topbarLedgerMeta", entries.length + " entries");
 
@@ -1559,6 +1423,237 @@ function historyRangeBounds(range) {
       "</tr></tfoot></table></div>";
   }
 
+
+  function renderSettings() {
+    var db = D.load();
+    setMeta("setSlips", String((db.slips || []).length));
+    setMeta("setTrash", String((db.deletedSlips || []).length));
+    setMeta("setParties", String((db.parties || []).length));
+    setMeta("setTx", String((db.slips || []).length));
+    setMeta("topbarSettingsMeta", (db.slips || []).length + " slips");
+  }
+
+  function renderAdmin() {
+    var db = D.load();
+    setMeta("adminSlips", String((db.slips || []).length));
+    setMeta("adminTrash", String((db.deletedSlips || []).length));
+    setMeta("adminParties", String((db.parties || []).length));
+    setMeta("adminBanks", String((db.banks || []).length));
+    setMeta("topbarAdminMeta", (db.slips || []).length + " slips");
+    var signed = $("adminSignedIn");
+    if (signed) {
+      var who = "Administrator";
+      try { who = sessionStorage.getItem("nexo_user") || localStorage.getItem("nexo_user") || who; } catch (eU) {}
+      signed.textContent = who;
+    }
+    setMeta("adminUsersCount", String((db.users || []).length));
+    setMeta("adminUsersMeta", (db.users || []).length + " users");
+    renderAdminUsers(db);
+    var host = $("adminRecent");
+    if (host) {
+      var recent = (db.slips || []).slice().sort(function (a, b) {
+        return String(b.updatedAt || b.createdAt || b.date || "").localeCompare(String(a.updatedAt || a.createdAt || a.date || "")) || ((b.id || 0) - (a.id || 0));
+      }).slice(0, 8);
+      if (!recent.length) {
+        host.innerHTML = emptyHtml("No recent activity", "New slips will appear here as they are saved.");
+      } else {
+        host.innerHTML =
+          '<div class="table-wrap"><table class="table table--slips">' +
+          '<colgroup><col class="col-date"><col class="col-party"><col class="col-party"><col class="col-amount"><col class="col-bank"><col class="col-serial"></colgroup>' +
+          '<thead><tr><th class="date-cell" style="text-align:center">Date</th><th class="party-cell" style="text-align:center">From</th><th class="party-cell" style="text-align:center">To</th><th class="amount-cell" style="text-align:center">Amount</th><th class="bank-cell" style="text-align:center">Bank</th><th class="serial-cell" style="text-align:center">Serial</th></tr></thead><tbody>' +
+          recent.map(function (s) {
+            return "<tr>" +
+              '<td class="date-cell" style="text-align:center;white-space:nowrap;vertical-align:middle">' + esc(formatDateDisplay(s.date)) + "</td>" +
+              titledCell(s.from, "party-cell") +
+              titledCell(s.to, "party-cell") +
+              '<td class="num amount-cell" style="text-align:center;white-space:nowrap;vertical-align:middle">' + money(s.amount) + "</td>" +
+              titledCell(s.bank, "bank-cell") +
+              '<td class="serial-cell" style="text-align:center;white-space:nowrap;vertical-align:middle">' + dash(serialOf(s)) + "</td></tr>";
+          }).join("") +
+          "</tbody></table></div>";
+      }
+    }
+  }
+
+  function renderAdminUsers(db) {
+    db = db || D.load();
+    var host = $("adminUsersTable");
+    if (!host) return;
+    var users = (db.users || []).slice().sort(function (a, b) {
+      return String(a.name || "").localeCompare(String(b.name || ""));
+    });
+    if (!users.length) {
+      host.innerHTML = emptyHtml("No users yet", "Add a user to manage desk access.");
+      return;
+    }
+    host.innerHTML =
+      '<div class="table-wrap"><table class="table table--users">' +
+      '<colgroup>' +
+      '<col class="col-name"><col class="col-user"><col class="col-role">' +
+      '<col class="col-ws"><col class="col-status"><col class="col-actions">' +
+      '</colgroup>' +
+      '<thead><tr>' +
+      '<th class="party-cell" style="text-align:center">Name</th><th style="text-align:center">Username</th><th style="text-align:center">Role</th>' +
+      '<th style="text-align:center">Workspace</th><th style="text-align:center">Status</th><th class="actions-col" style="text-align:center">Actions</th>' +
+      '</tr></thead><tbody>' +
+      users.map(function (u) {
+        var st = String(u.status || "active");
+        var role = String(u.role || "clerk");
+        var un = String(u.username || "").trim() || "—";
+        return "<tr data-user-id=\"" + esc(u.id) + "\">" +
+          titledCell(u.name || "—", "party-cell") +
+          '<td style="text-align:center;vertical-align:middle;white-space:nowrap" title="' + esc(un) + '">' + esc(un) + "</td>" +
+          '<td style="text-align:center;vertical-align:middle"><span class="tag-role tag-role--' + esc(role) + '">' + esc(role) + "</span></td>" +
+          '<td style="text-align:center;vertical-align:middle;white-space:normal;word-break:normal;overflow-wrap:break-word" title="' + esc(u.workspace || "Main desk") + '">' + esc(u.workspace || "Main desk") + "</td>" +
+          '<td style="text-align:center;vertical-align:middle"><span class="tag-status tag-status--' + esc(st) + '">' + esc(st) + "</span></td>" +
+          '<td class="actions-col" style="text-align:center"><div class="row-actions" style="justify-content:center">' +
+          '<button type="button" class="btn-small" data-edit-user="' + esc(u.id) + '">Edit</button>' +
+          '<button type="button" class="btn-small" data-toggle-user="' + esc(u.id) + '">' + (st === "active" ? "Disable" : "Enable") + "</button>" +
+          delBtn({ size: "sm", title: "Delete user", data: { "del-user": String(u.id) } }) +
+          "</div></td></tr>";
+      }).join("") +
+      "</tbody></table></div>";
+    fitTableCells(host);
+  }
+
+  async function addAdminUser() {
+    var name = (($("adminUserName") && $("adminUserName").value) || "").trim();
+    var username = (($("adminUserUsername") && $("adminUserUsername").value) || "").trim().toLowerCase();
+    var role = (($("adminUserRole") && $("adminUserRole").value) || "clerk");
+    var workspace = (($("adminUserWorkspace") && $("adminUserWorkspace").value) || "Main desk").trim() || "Main desk";
+    if (!name) { notify("Enter a name."); return; }
+    if (!username) { notify("Enter a username."); return; }
+    var db = D.load();
+    if ((db.users || []).some(function (u) { return String(u.username).toLowerCase() === username; })) {
+      notify("Username already exists.", { kind: "error" });
+      return;
+    }
+    var id = Number(db.nextUserId) || ((db.users || []).length + 1);
+    db.users = (db.users || []).concat([{
+      id: id,
+      name: name,
+      username: username,
+      role: role,
+      workspace: workspace,
+      status: "active",
+      password: role === "admin" ? "admin" : username,
+      createdAt: new Date().toISOString()
+    }]);
+    db.nextUserId = id + 1;
+    D.save(db);
+    if ($("adminUserName")) $("adminUserName").value = "";
+    if ($("adminUserUsername")) $("adminUserUsername").value = "";
+    notify("User added");
+    pulseBtn($("adminAddUser"), "Added", 1000);
+    renderAdmin();
+  }
+
+  async function editAdminUser(id) {
+    id = Number(id);
+    var db = D.load();
+    var u = (db.users || []).find(function (x) { return Number(x.id) === id; });
+    if (!u) return;
+    var name = window.NexoDialog && window.NexoDialog.prompt
+      ? await window.NexoDialog.prompt("Name", u.name, { title: "Edit user" })
+      : global.prompt("Name", u.name);
+    if (name == null) return;
+    name = String(name).trim();
+    if (!name) return;
+    var role = window.NexoDialog && window.NexoDialog.prompt
+      ? await window.NexoDialog.prompt("Role (admin / manager / clerk / viewer)", u.role || "clerk", { title: "Edit role" })
+      : global.prompt("Role", u.role || "clerk");
+    if (role == null) return;
+    role = String(role).trim().toLowerCase() || u.role;
+    var workspace = window.NexoDialog && window.NexoDialog.prompt
+      ? await window.NexoDialog.prompt("Workspace", u.workspace || "Main desk", { title: "Edit workspace" })
+      : global.prompt("Workspace", u.workspace || "Main desk");
+    if (workspace == null) return;
+    u.name = name;
+    u.role = role;
+    u.workspace = String(workspace).trim() || "Main desk";
+    u.updatedAt = new Date().toISOString();
+    D.save(db);
+    notify("User updated.");
+    renderAdmin();
+  }
+
+  function toggleAdminUser(id) {
+    id = Number(id);
+    var db = D.load();
+    var u = (db.users || []).find(function (x) { return Number(x.id) === id; });
+    if (!u) return;
+    u.status = u.status === "active" ? "disabled" : "active";
+    u.updatedAt = new Date().toISOString();
+    D.save(db);
+    notify(u.status === "active" ? "User enabled." : "User disabled.");
+    renderAdmin();
+  }
+
+  async function deleteAdminUser(id) {
+    id = Number(id);
+    var db = D.load();
+    var u = (db.users || []).find(function (x) { return Number(x.id) === id; });
+    if (!u) return;
+    if ((db.users || []).length <= 1) {
+      notify("Keep at least one user.", { kind: "warning" });
+      return;
+    }
+    if (!(await nexoConfirm("Delete user “" + u.name + "”?", { title: "Delete user", okText: "Delete", cancelText: "Cancel", danger: true }))) return;
+    db.users = (db.users || []).filter(function (x) { return Number(x.id) !== id; });
+    D.save(db);
+    notify("User deleted.");
+    renderAdmin();
+  }
+
+  function backupData(btn) {
+    var db = D.load();
+    function finish(payload) {
+      var blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "NEXO_Backup_" + new Date().toISOString().slice(0, 10) + ".json";
+      a.click();
+      URL.revokeObjectURL(a.href);
+      var n = (db.slips || []).length;
+      var an = (payload.attachmentFiles || []).length;
+      announce("Backup downloaded · " + n + " slips" + (an ? " · " + an + " files" : ""));
+      notify("Backup saved · " + n + " slips" + (an ? " · " + an + " images" : ""));
+      pulseBtn(btn || $("settingsBackup") || $("adminBackupBtn"), "Saved", 1500);
+      try { localStorage.setItem("nexo_last_backup_at", String(Date.now())); } catch (eB) {}
+    }
+    if (global.NexoAttachments && global.NexoAttachments.exportAll) {
+      global.NexoAttachments.exportAll().then(function (files) {
+        var payload = Object.assign({}, db, { attachmentFiles: files || [] });
+        finish(payload);
+      }).catch(function () { finish(db); });
+    } else {
+      finish(db);
+    }
+  }
+
+  function exportCsv(btn) {
+    var rows = [["Date", "From", "To", "Amount", "Bank", "Serial", "SlipNo", "Remarks"]];
+    var slips = D.load().slips || [];
+    slips.forEach(function (s) {
+      rows.push([s.date || "", s.from || "", s.to || "", s.amount || 0, s.bank || "", serialOf(s), s.slipNo || "", s.remarks || ""]);
+    });
+    var csv = rows.map(function (r) {
+      return r.map(function (c) {
+        var t = String(c == null ? "" : c);
+        return /[",\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
+      }).join(",");
+    }).join("\n");
+    var blob = new Blob([csv], { type: "text/csv" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "NEXO_Slips_" + new Date().toISOString().slice(0, 10) + ".csv";
+    a.click();
+    URL.revokeObjectURL(a.href);
+    announce("CSV exported · " + slips.length + " rows");
+    notify("CSV exported · " + slips.length + " slips");
+    pulseBtn(btn || $("settingsCsv") || $("adminCsvBtn"), "Exported", 1500);
+  }
+
   function exportLedgerCsv(btn) {
     var party = ($("ledgerParty") && $("ledgerParty").value) || "";
     if (!party) {
@@ -1567,13 +1662,23 @@ function historyRangeBounds(range) {
     }
     var fromVal = ($("ledgerFrom") && $("ledgerFrom").value) || "";
     var toVal = ($("ledgerTo") && $("ledgerTo").value) || "";
-    var entries = slipLedgerEntries(party).filter(function (x) {
-      var dt = String(x.date || "");
-      if (fromVal && dt && dt < fromVal) return false;
-      if (toVal && dt && dt > toVal) return false;
-      return true;
-    }).sort(function (a, b) {
-      return String(a.date || "").localeCompare(String(b.date || "")) || ((a.sort || 0) - (b.sort || 0));
+    var low = party.toLowerCase();
+    var entries = [];
+    (D.load().slips || []).forEach(function (s) {
+      var dt = String(s.date || "");
+      if (fromVal && dt && dt < fromVal) return;
+      if (toVal && dt && dt > toVal) return;
+      var amt = Number(s.amount) || 0;
+      var ref = String(s.serialNo || s.slipNo || "").trim() || serialOf(s);
+      if (String(s.from || "").toLowerCase() === low) {
+        entries.push({ date: dt, debit: 0, credit: amt, description: s.remarks || "", reference: ref, fromParty: s.from || "", toParty: s.to || "", id: s.id });
+      }
+      if (String(s.to || "").toLowerCase() === low) {
+        entries.push({ date: dt, debit: amt, credit: 0, description: s.remarks || "", reference: ref, fromParty: s.from || "", toParty: s.to || "", id: s.id });
+      }
+    });
+    entries.sort(function (a, b) {
+      return String(a.date).localeCompare(String(b.date)) || ((a.id || 0) - (b.id || 0));
     });
     var bal = 0;
     var lines = [["Date", "Description", "Reference", "Debit", "Credit", "Balance", "From Party", "To Party"]];
@@ -1581,21 +1686,10 @@ function historyRangeBounds(range) {
       var d = Number(x.debit) || 0;
       var c = Number(x.credit) || 0;
       bal += d - c;
-      lines.push([
-        x.date || "",
-        x.description || "",
-        x.reference || "",
-        d || "",
-        c || "",
-        bal,
-        x.fromParty || "",
-        x.toParty || ""
-      ]);
+      lines.push([x.date || "", x.description || "", x.reference || "", d || "", c || "", bal, x.fromParty || "", x.toParty || ""]);
     });
     var csv = lines.map(function (row) {
-      return row.map(function (v) {
-        return '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
-      }).join(",");
+      return row.map(function (v) { return '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"'; }).join(",");
     }).join("\n");
     var blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     var a = document.createElement("a");
@@ -1608,30 +1702,56 @@ function historyRangeBounds(range) {
   }
 
 
+  async function clearAllData() {
+    var db = D.load();
+    var nSlips = (db.slips || []).length;
+    var nTrash = (db.deletedSlips || []).length;
+    var nParties = (db.parties || []).length;
+    var nBanks = (db.banks || []).length;
+    var body =
+      "This will permanently erase:\n" +
+      "• " + nSlips + " active slip" + (nSlips === 1 ? "" : "s") + "\n" +
+      "• " + nTrash + " deleted slip" + (nTrash === 1 ? "" : "s") + "\n" +
+      "• " + nParties + " part" + (nParties === 1 ? "y" : "ies") + "\n" +
+      "• " + nBanks + " bank" + (nBanks === 1 ? "" : "s") + "\n\n" +
+      "This cannot be undone.";
+    if (!(await nexoConfirm(body, { title: "Clear all data?", okText: "Clear", cancelText: "Cancel", danger: true }))) return;
+    function finishClear() {
+      D.save({
+        slips: [], deletedSlips: [], parties: [], banks: D.defaultBanks.slice(),
+        categories: [], recentParties: [], recentRemarks: [], lastSlipDate: "", slipSeq: 1, nextId: 1,
+        users: [
+          { id: 1, name: "Administrator", username: "admin", role: "admin", workspace: "Main desk", status: "active", createdAt: new Date().toISOString() }
+        ],
+        nextUserId: 2
+      });
+      try { localStorage.removeItem("nexo_tm_seeded_v1"); } catch (eSeed) {}
+      announce("All data cleared.");
+      notify("Workspace wiped · ready for a fresh register");
+      renderSettings(); renderAdmin(); renderHistory(); renderSearch(); renderTrash(); renderParties(); renderBanks(); renderLedger();
+      if (global.NexoWorkspace && global.NexoWorkspace.refresh) global.NexoWorkspace.refresh();
+    }
+    var play = global.NexoWipe && global.NexoWipe.play;
+    if (typeof play === "function") play({ label: "Reset", onCovered: finishClear });
+    else finishClear();
+  }
+
   function show(name) {
     if (name === "search") {
       fillBankSelect($("sBank"));
       if (global.NexoSelect) global.NexoSelect.enhanceAll();
-      /* Always open Search on All dates so every slip is visible */
-      setDateRange("all");
+      /* Default range = all time so seeded slips appear without extra clicks */
+      var fromEl = $("sFromDate");
+      var toEl = $("sToDate");
+      var hasRange = (fromEl && fromEl.value) || (toEl && toEl.value);
+      var anyChip = document.querySelector("#searchDateChips .chip.is-active");
+      if (!hasRange && !anyChip) {
+        setDateRange("all");
+      } else {
+        renderSearch();
+      }
     }
-    else if (name === "all") {
-      /* Show full history by default — clear accidental leftover query from other pages */
-      historyQuery = "";
-      historyFilters.range = "all";
-      historyFilters.fromDate = "";
-      historyFilters.toDate = "";
-      historyFilters.bank = "";
-      historyFilters.from = "";
-      historyFilters.to = "";
-      historyFilters.amountMin = "";
-      historyFilters.amountMax = "";
-      historyFilters.remarks = "";
-      historyFilters.slip = "";
-      var topIn = $("topSearchInput");
-      if (topIn) topIn.value = "";
-      renderHistory(0);
-    }
+    else if (name === "all") renderHistory();
     else if (name === "trash") renderTrash();
     else if (name === "parties") renderParties();
     else if (name === "banks") renderBanks();
@@ -1835,21 +1955,32 @@ function historyRangeBounds(range) {
     })();
     var searchDel = $("searchDeleteSelected");
     if (searchDel) searchDel.addEventListener("click", function () { moveToTrash(selectedIds($("searchTable"))); });
+    function openPrintSettingsUI() {
+      if (global.NexoPrint && global.NexoPrint.openSettings) global.NexoPrint.openSettings();
+      else if (global.NexoWorkspace && global.NexoWorkspace.go) global.NexoWorkspace.go("settings");
+    }
     var printSearch = $("printSearch");
     if (printSearch) printSearch.addEventListener("click", function () {
-      var rows = lastSearchRows && lastSearchRows.length ? lastSearchRows : filterSlips(readSearchFilters());
+      var rows = lastSearchRows && lastSearchRows.length ? lastSearchRows.slice() : filterSlips(readSearchFilters());
+      if (!rows.length) { notify("Nothing to print."); return; }
       if (global.NexoPrint) global.NexoPrint.printSearch(rows);
       else global.print();
     });
+    var printSearchSet = $("printSearchSettings");
+    if (printSearchSet) printSearchSet.addEventListener("click", openPrintSettingsUI);
 
     var refreshAll = $("refreshAll") || $("topbarHistoryRefresh");
     if (refreshAll) refreshAll.addEventListener("click", function (e) { renderHistory(); announce("History refreshed."); notify("History refreshed"); pulseBtn(e.currentTarget, "Refreshed", 900); });
-    var printAll = $("printAll") || $("topbarHistoryPrint");
-    if (printAll) printAll.addEventListener("click", function () {
+    function printHistoryNow() {
       var rows = (D.load().slips || []).slice().filter(slipMatchesHistoryFilters);
+      if (!rows.length) { notify("Nothing to print."); return; }
       if (global.NexoPrint) global.NexoPrint.printHistory(rows);
       else global.print();
-    });
+    }
+    var printAll = $("printAll") || $("printHistoryPage") || $("topbarHistoryPrint");
+    if (printAll) printAll.addEventListener("click", printHistoryNow);
+    var printHistSet = $("printHistorySettings");
+    if (printHistSet) printHistSet.addEventListener("click", openPrintSettingsUI);
     var delSel = $("deleteSelected") || $("topbarHistoryDelete");
     if (delSel) delSel.addEventListener("click", function () { moveToTrash(selectedIds($("allTable"))); });
 
@@ -2134,12 +2265,16 @@ function historyRangeBounds(range) {
     if (trashDestroy) trashDestroy.addEventListener("click", function () { destroyFromTrash(selectedIds($("trashTable"))); });
     var trashRefresh = $("topbarTrashRefresh");
     if (trashRefresh) trashRefresh.addEventListener("click", function (e) { renderTrash(); announce("Trash refreshed."); notify("Trash refreshed"); pulseBtn(e.currentTarget, "Refreshed", 900); });
-    var trashPrint = $("topbarTrashPrint");
-    if (trashPrint) trashPrint.addEventListener("click", function () {
+    function printTrashNow() {
       var rows = (D.load().deletedSlips || []).slice();
+      if (!rows.length) { notify("Nothing to print."); return; }
       if (global.NexoPrint) global.NexoPrint.printTrash(rows);
       else global.print();
-    });
+    }
+    var trashPrint = $("topbarTrashPrint") || $("printTrashPage");
+    if (trashPrint) trashPrint.addEventListener("click", printTrashNow);
+    var pts = $("printTrashSettings");
+    if (pts) pts.addEventListener("click", openPrintSettingsUI);
 
     var addP = $("addParty");
     if (addP) addP.addEventListener("click", addParty);
@@ -2226,29 +2361,22 @@ function historyRangeBounds(range) {
       renderBanks();
     });
 
-    
     var ledSet = $("ledgerSettingsBtn");
     if (ledSet) ledSet.addEventListener("click", function () {
-      if (global.NexoWorkspace && global.NexoWorkspace.go) global.NexoWorkspace.go("settings");
+      if (global.NexoPrint && global.NexoPrint.openSettings) global.NexoPrint.openSettings();
+      else if (global.NexoWorkspace && global.NexoWorkspace.go) global.NexoWorkspace.go("settings");
     });
-
     var viewLed = $("viewLedger");
     if (viewLed) viewLed.addEventListener("click", renderLedger);
-    var ledParty = $("ledgerParty");
-    if (ledParty) ledParty.addEventListener("change", renderLedger);
-    ["ledgerFrom", "ledgerTo"].forEach(function (id) {
-      var el = $(id);
-      if (el) el.addEventListener("change", renderLedger);
-    });
+    /* Party / dates: only render after View ledger click */
     var resetLed = $("resetLedger") || $("topbarLedgerReset");
     if (resetLed) resetLed.addEventListener("click", function () {
       if ($("ledgerFrom")) $("ledgerFrom").value = "";
       if ($("ledgerTo")) $("ledgerTo").value = "";
-      /* Clear current so fillLedgerParties picks the default party with slips */
       if ($("ledgerParty")) $("ledgerParty").value = "";
       fillLedgerParties();
       if (global.NexoSelect) global.NexoSelect.enhanceAll();
-      renderLedger();
+      renderLedger(); /* shows empty state */
     });
     var printLed = $("printLedger") || $("topbarLedgerPrint");
     if (printLed) printLed.addEventListener("click", function () {
@@ -2260,24 +2388,23 @@ function historyRangeBounds(range) {
           notify("Select a party to print the ledger.");
           return;
         }
-        var entries = slipLedgerEntries(party).filter(function (x) {
-          var dt = String(x.date || "");
-          if (fromVal && dt && dt < fromVal) return false;
-          if (toVal && dt && dt > toVal) return false;
-          return true;
-        }).sort(function (a, b) {
-          return String(a.date || "").localeCompare(String(b.date || "")) || ((a.sort || 0) - (b.sort || 0));
-        }).map(function (x) {
-          return {
-            date: x.date,
-            debit: x.debit,
-            credit: x.credit,
-            desc: x.description || "",
-            ref: x.reference || "",
-            id: x.sort,
-            fromParty: x.fromParty,
-            toParty: x.toParty
-          };
+        var low = party.toLowerCase();
+        var entries = [];
+        (D.load().slips || []).forEach(function (s) {
+          var dt = String(s.date || "");
+          if (fromVal && dt && dt < fromVal) return;
+          if (toVal && dt && dt > toVal) return;
+          var amt = Number(s.amount) || 0;
+          var ref = String(s.serialNo || s.slipNo || "").trim() || serialOf(s);
+          if (String(s.from || "").toLowerCase() === low) {
+            entries.push({ date: dt, debit: 0, credit: amt, desc: s.remarks || "", ref: ref, id: s.id, fromParty: s.from, toParty: s.to });
+          }
+          if (String(s.to || "").toLowerCase() === low) {
+            entries.push({ date: dt, debit: amt, credit: 0, desc: s.remarks || "", ref: ref, id: s.id, fromParty: s.from, toParty: s.to });
+          }
+        });
+        entries.sort(function (a, b) {
+          return String(a.date).localeCompare(String(b.date)) || ((a.id || 0) - (b.id || 0));
         });
         global.NexoPrint.printLedger(party, entries, fromVal, toVal);
       } else global.print();
@@ -2401,19 +2528,6 @@ function historyRangeBounds(range) {
       renderHistory(0);
     }
   };
-
-  document.addEventListener("nexo:data", function () {
-    try {
-      var active = document.querySelector("#view-workspace .ws-page.is-active");
-      var name = active && active.getAttribute("data-ws-page");
-      if (name === "search") renderSearch();
-      else if (name === "all") renderHistory();
-      else if (name === "trash") renderTrash();
-      else if (name === "parties") renderParties();
-      else if (name === "banks") renderBanks();
-      else if (name === "ledger") { fillLedgerParties(); renderLedger(); }
-    } catch (e) {}
-  });
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bind);
   else bind();
