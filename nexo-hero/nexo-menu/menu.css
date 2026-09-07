@@ -1,0 +1,397 @@
+/* NEXO Menu — reusable side panel + cross toggle
+   Requires tokens (or uses fallbacks):
+   --primary, --brown, --on-fill, --ink, --font, --ease, --ease-menu, --focus
+*/
+
+:root {
+  --nexo-primary: var(--primary, #B55500);
+  --nexo-brown: var(--brown, #34170A);
+  --nexo-on-fill: var(--on-fill, #FFF2E0);
+  --nexo-ink: var(--ink, #1A120B);
+  --nexo-font: var(--font, "Onest", system-ui, sans-serif);
+  --nexo-display: var(--font-display, "Poiret One", system-ui, sans-serif);
+  --nexo-ease: var(--ease, cubic-bezier(0.22, 1, 0.36, 1));
+  --nexo-ease-menu: var(--ease-menu, cubic-bezier(0.65, 0, 0.35, 1));
+  --nexo-focus: var(--focus, 0 0 0 2px #FFF2E0, 0 0 0 4px #B55500);
+}
+
+/* —— Cross / hamburger trigger —— */
+.nav__menu {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  color: var(--nexo-ink);
+  border-radius: 50%;
+  transition: color .4s ease;
+}
+.nav__menu:hover,
+.nav__menu:focus-visible { color: var(--nexo-primary); outline: none; }
+.nav__menu:focus-visible { box-shadow: var(--nexo-focus); }
+/* Lannino-style: vertical bars → X */
+.nav__menu-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: auto;
+  height: 18px;
+}
+.nav__menu-line {
+  display: block;
+  width: 2px;
+  height: 18px;
+  background: currentColor;
+  border-radius: 1px;
+  transform-origin: center;
+  transition: transform .45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.nav__menu:hover .nav__menu-line,
+.nav__menu:focus-visible .nav__menu-line {
+  transform: scaleY(1.25);
+}
+.nav__menu.is-open .nav__menu-line--1 {
+  transform: translateX(4.5px) rotate(45deg);
+}
+.nav__menu.is-open .nav__menu-line--2 {
+  transform: translateX(-4.5px) rotate(-45deg);
+}
+.nav__menu.is-open:hover .nav__menu-line--1,
+.nav__menu.is-open:focus-visible .nav__menu-line--1 {
+  transform: translateX(4.5px) rotate(45deg);
+}
+.nav__menu.is-open:hover .nav__menu-line--2,
+.nav__menu.is-open:focus-visible .nav__menu-line--2 {
+  transform: translateX(-4.5px) rotate(-45deg);
+}
+
+body.menu-open { overflow: hidden; }
+body.menu-open .nav__menu { color: var(--nexo-on-fill); }
+body.menu-open .nav__menu:hover { color: var(--nexo-primary); }
+
+/* Optional blur target — add data-nexo-blur on any element */
+[data-nexo-blur] {
+  transition: opacity .9s var(--nexo-ease-menu), filter .9s var(--nexo-ease-menu);
+  filter: blur(0);
+  transform: none;
+}
+body.menu-open [data-nexo-blur] {
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.78;
+  filter: blur(5px);
+  transform: none;
+}
+
+/* —— Overlay —— */
+.menu-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  pointer-events: none;
+}
+.menu-overlay.is-open { pointer-events: auto; }
+.menu-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(16, 14, 12, 0.52);
+  backdrop-filter: blur(22px) saturate(0.88) brightness(0.86);
+  -webkit-backdrop-filter: blur(22px) saturate(0.88) brightness(0.86);
+  opacity: 0;
+  transition: opacity .45s var(--nexo-ease-menu, cubic-bezier(0.22, 1, 0.36, 1));
+}
+.menu-overlay.is-open .menu-scrim { opacity: 1; }
+.menu-overlay:not(.is-open) .menu-scrim { transition-delay: .12s; }
+
+/* —— Panel —— */
+.side-menu {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: clamp(405px, 25vw, 485px);
+  height: 100dvh;
+  z-index: 100;
+  visibility: hidden;
+  pointer-events: none;
+  transition: visibility 0s linear 1.25s;
+}
+.side-menu.is-open {
+  visibility: visible;
+  pointer-events: auto;
+  transition-delay: 0s;
+}
+
+.side-menu__orange,
+.side-menu__brown {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  transform: translate3d(105%, 0, 0);
+  transition: transform 1.1s var(--nexo-ease-menu);
+  backface-visibility: hidden;
+}
+.side-menu.is-animating .side-menu__orange,
+.side-menu.is-animating .side-menu__brown {
+  will-change: transform;
+}
+.side-menu__orange { width: 100%; z-index: 1; }
+.side-menu__brown { width: calc(100% - 14px); z-index: 2; }
+.side-menu.is-open .side-menu__orange {
+  transform: none;
+  transition-delay: 0s;
+}
+.side-menu.is-open .side-menu__brown {
+  transform: none;
+  transition-delay: .12s;
+}
+.side-menu:not(.is-open) .side-menu__orange { transition-delay: .12s; }
+.side-menu:not(.is-open) .side-menu__brown { transition-delay: 0s; }
+
+.side-menu__orange-cap,
+.side-menu__brown-cap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 56px;
+  height: 100%;
+  overflow: visible;
+}
+.side-menu__orange-cap { color: var(--nexo-primary); }
+.side-menu__brown-cap { color: var(--nexo-brown); }
+.side-menu__orange-cap path,
+.side-menu__brown-cap path { fill: currentColor; }
+
+.side-menu__orange-body,
+.side-menu__sheet {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 44px;
+}
+.side-menu__orange-body { background: var(--nexo-primary); }
+.side-menu__sheet {
+  background: var(--nexo-brown);
+  color: var(--nexo-on-fill);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.side-menu__inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 1.65rem clamp(1.6rem, 3.2vw, 2.4rem) 2rem clamp(1.9rem, 3.6vw, 2.7rem);
+  overflow-y: auto;
+}
+.side-menu__top {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  margin-bottom: 1.55rem;
+  flex-shrink: 0;
+  opacity: 0;
+  transform: translate3d(0, 10px, 0);
+  transition: opacity .45s var(--nexo-ease-menu), transform .45s var(--nexo-ease-menu);
+}
+.side-menu.is-open .side-menu__top {
+  opacity: 1;
+  transform: none;
+  transition-delay: .22s;
+}
+.side-menu:not(.is-open) .side-menu__top {
+  transition-delay: 0s;
+  transition-duration: .22s;
+}
+.side-menu__top::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -.55rem;
+  height: 1px;
+  background: rgba(255,242,224,.12);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform .5s var(--nexo-ease-menu);
+}
+.side-menu.is-open .side-menu__top::after {
+  transform: scaleX(1);
+  transition-delay: .35s;
+}
+.side-menu__close {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid rgba(255,242,224,.24);
+  border-radius: 50%;
+  background: rgba(255,242,224,.06);
+  color: var(--nexo-on-fill);
+  cursor: pointer;
+  transform: translateY(-50%) scale(.92);
+  opacity: 0;
+  transition: opacity .35s ease, transform .35s var(--nexo-ease), background .25s ease, border-color .25s ease, color .25s ease;
+}
+.side-menu__close svg { display: none; }
+.side-menu__close::before,
+.side-menu__close::after {
+  content: "";
+  position: absolute;
+  width: 17px;
+  height: 1.8px;
+  border-radius: 2px;
+  background: currentColor;
+}
+.side-menu__close::before { transform: rotate(45deg); }
+.side-menu__close::after { transform: rotate(-45deg); }
+.side-menu__close:hover,
+.side-menu__close:focus-visible {
+  outline: none;
+  background: var(--nexo-primary);
+  border-color: var(--nexo-primary);
+  color: var(--nexo-on-fill);
+}
+.side-menu.is-open .side-menu__close {
+  opacity: 1;
+  transform: translateY(-50%) scale(1);
+  transition-delay: .28s;
+}
+.side-menu:not(.is-open) .side-menu__close {
+  transition-duration: .18s;
+}
+
+.side-menu__label {
+  font-size: .62rem;
+  font-weight: 500;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: rgba(255,242,224,.38);
+  line-height: 1;
+  font-family: var(--nexo-font);
+}
+.side-menu.is-open .side-menu__label {
+  animation: nexoMenuLabelBreath 2.8s cubic-bezier(.45,0,.55,1) .7s both;
+}
+@keyframes nexoMenuLabelBreath {
+  0%, 100% { opacity: .38; letter-spacing: .22em; }
+  40% { opacity: .55; letter-spacing: .26em; }
+}
+
+.side-menu__nav {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: .35rem;
+}
+/* Nav items: GSAP drives opacity/transform (any item count).
+   CSS only provides the resting closed state. */
+.side-menu__nav li {
+  opacity: 0;
+  transform: translate3d(18px, 0, 0);
+  will-change: opacity, transform;
+}
+.side-menu__footer {
+  will-change: opacity, transform;
+}
+
+.side-menu__nav a {
+  display: flex;
+  align-items: baseline;
+  gap: .55rem;
+  text-decoration: none;
+  color: var(--nexo-on-fill);
+  font-family: var(--nexo-display);
+  font-size: clamp(2.5rem, 5.2vw, 3.15rem);
+  font-weight: 400;
+  letter-spacing: .01em;
+  line-height: 1.15;
+  padding: .18rem 0 .18rem .65rem;
+  position: relative;
+  transition: transform .45s var(--nexo-ease);
+}
+.side-menu__nav a:hover,
+.side-menu__nav a:focus-visible {
+  outline: none;
+  transform: translateX(5px);
+}
+.side-menu__nav a::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: .35em;
+  bottom: .35em;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--nexo-primary);
+  opacity: 0;
+  transform: scaleY(.4);
+  transition: opacity .35s ease, transform .4s var(--nexo-ease);
+}
+.side-menu__nav a.is-active::before { opacity: 1; transform: scaleY(1); }
+.side-menu__nav a::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: .12rem;
+  width: 0;
+  height: 1.5px;
+  background: var(--nexo-on-fill);
+  border-radius: 1px;
+  transition: width .28s cubic-bezier(.76, 0, .24, 1);
+}
+.side-menu__nav a:hover::after,
+.side-menu__nav a:focus-visible::after { width: 100%; }
+.side-menu__num {
+  font-size: .78rem;
+  font-weight: 500;
+  letter-spacing: .08em;
+  color: var(--nexo-primary);
+  min-width: 1.25rem;
+  font-variant-numeric: tabular-nums;
+  font-family: var(--nexo-font);
+  transition: transform .4s var(--nexo-ease);
+}
+.side-menu__nav a.is-active .side-menu__num { transform: scale(1.08); }
+
+@media (max-width: 640px) {
+  .nav__menu { width: 44px; height: 44px; }
+  .nav__menu-icon { gap: 6px; height: 16px; }
+  .nav__menu-line { width: 2px; height: 16px; }
+  .nav__menu.is-open .nav__menu-line--1 { transform: translateX(4px) rotate(45deg); }
+  .nav__menu.is-open .nav__menu-line--2 { transform: translateX(-4px) rotate(-45deg); }
+  .side-menu { width: min(100vw, 405px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav__menu-line,
+  .side-menu__orange,
+  .side-menu__brown,
+  .side-menu__nav li,
+  .side-menu__top,
+  .menu-scrim,
+  body.menu-open [data-nexo-blur] {
+    animation: none !important;
+    transition: none !important;
+  }
+  .side-menu.is-open .side-menu__label { animation: none; }
+  .side-menu__nav a:hover { transform: none !important; }
+  body.menu-open [data-nexo-blur] { transform: none; opacity: 1; filter: none; }
+}

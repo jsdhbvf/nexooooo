@@ -1,0 +1,784 @@
+
+/* Remove outline from every element */
+*,
+*::before,
+*::after {
+  outline: none !important;
+  outline-width: 0 !important;
+  outline-style: none !important;
+}
+*:focus,
+*:focus-visible,
+*:active {
+  outline: none !important;
+}
+
+/* NEXO Hero — Awwwards-lean editorial system index */
+:root {
+  --bg: #FFF2E0;
+  --surface: #FFF8ED;
+  --ink: #1A120B;
+  --ink-soft: #5C4F44;
+  --primary: #B55500;
+  --brown: #34170A;
+  --on-fill: #FFF2E0;
+  --line: rgba(181, 85, 0, 0.36);
+  --font: "Onest", system-ui, sans-serif;
+  --font-display: "Poiret One", system-ui, sans-serif;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-menu: cubic-bezier(0.65, 0, 0.35, 1);
+  --focus: 0 0 0 2px var(--bg), 0 0 0 4px var(--primary);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Small, quiet feedback for workspace actions. Major page changes keep the wipe. */
+.nexo-toast {
+  position: fixed;
+  right: clamp(16px, 3vw, 32px);
+  bottom: clamp(16px, 3vw, 28px);
+  z-index: 100010;
+  width: max-content;
+  max-width: min(360px, calc(100vw - 32px));
+  padding: 11px 15px 11px 13px;
+  border-left: 3px solid var(--primary, #B55500);
+  border-radius: 3px;
+  background: var(--brown, #34170A);
+  color: var(--on-fill, #FFF2E0);
+  box-shadow: 0 12px 30px rgba(26, 18, 11, 0.22);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font: 600 12px/1.35 var(--font, system-ui, sans-serif);
+  letter-spacing: 0.015em;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(8px);
+  transition: opacity 180ms ease, transform 240ms var(--ease, ease), visibility 0s linear 240ms;
+  pointer-events: none;
+}
+.nexo-toast__icon {
+  flex: 0 0 auto;
+  width: 17px;
+  height: 17px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-size: 11px;
+  line-height: 1;
+}
+.nexo-toast__action {
+  flex: 0 0 auto;
+  margin: -4px -6px -4px 5px;
+  padding: 5px 7px;
+  border: 0;
+  border-bottom: 1px solid currentColor;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.nexo-toast__action:hover { opacity: 0.72; }
+.nexo-toast.has-action { pointer-events: auto; }
+.nexo-toast--error { border-left-color: #E36C58; }
+.nexo-toast--warning { border-left-color: #E2A34A; }
+.nexo-toast.is-visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition: opacity 180ms ease, transform 240ms var(--ease, ease);
+}
+.nexo-toast[hidden] { display: none; }
+@media (max-width: 700px) {
+  .nexo-toast {
+    right: 16px;
+    bottom: 84px;
+    left: 16px;
+    width: auto;
+    max-width: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nexo-toast { transition: none; transform: none; }
+}
+
+html, body { height: 100%; margin: 0; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+/* Hide hero until GSAP owns opacity — prevents flash before letter-split */
+body.is-booting .nav,
+body.is-booting .hero__eyebrow,
+body.is-booting .hero__title,
+body.is-booting .chooser-cards,
+body.is-booting .page-marquee {
+  opacity: 0 !important;
+  pointer-events: none;
+}
+
+
+/* Ambient lines */
+.motion-lines {
+  position: fixed; inset: 0; z-index: 0;
+  pointer-events: none; overflow: hidden;
+}
+.motion-lines span {
+  position: absolute; display: block; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(181,85,0,.05) 20%, rgba(181,85,0,.12) 50%, rgba(181,85,0,.05) 80%, transparent);
+  transform: rotate(-18deg);
+  animation: line-drift linear infinite;
+  will-change: transform;
+}
+.motion-lines span:nth-child(1) { top: 12%; left: -20%; width: 55%; animation-duration: 22s; }
+.motion-lines span:nth-child(2) { top: 28%; left: -10%; width: 70%; animation-duration: 26s; animation-delay: -4s; opacity: .4; }
+.motion-lines span:nth-child(3) { top: 42%; left: -25%; width: 60%; animation-duration: 20s; animation-delay: -8s; opacity: .5; }
+.motion-lines span:nth-child(4) { top: 68%; left: -15%; width: 75%; animation-duration: 28s; animation-delay: -2s; opacity: .3; }
+@keyframes line-drift {
+  0%, 100% { transform: rotate(-18deg) translateX(-6%); }
+  50% { transform: rotate(-18deg) translateX(6%); }
+}
+
+/* Hero */
+.hero {
+  position: relative; z-index: 1; min-height: 100%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 5.5rem 1.25rem calc(6.5rem + 2.5rem); text-align: center;
+  background:
+    radial-gradient(ellipse 75% 50% at 50% 42%, rgba(255,248,237,.97), transparent 70%),
+    radial-gradient(ellipse 45% 35% at 15% 80%, rgba(181,85,0,.045), transparent 55%),
+    radial-gradient(ellipse 40% 30% at 88% 18%, rgba(52,23,10,.03), transparent 50%),
+    var(--bg);
+  transition: opacity .45s var(--ease-menu), transform .45s var(--ease-menu);
+}
+.hero.is-exiting { pointer-events: none; }
+.hero__eyebrow {
+  margin: 0 0 1.1rem;
+  font-size: .68rem; font-weight: 600;
+  letter-spacing: .28em; text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.hero__title {
+  margin: 0 0 0.85rem;
+  font-size: clamp(2.5rem, 8vw, 7rem);
+  font-weight: 800; letter-spacing: .04em; line-height: 1;
+  text-transform: uppercase; color: var(--brown);
+  white-space: nowrap;
+}
+.hero__word {
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
+  vertical-align: bottom;
+}
+.hero__word + .hero__word { margin-left: 0.28em; }
+.hero__title .accent { color: var(--primary); }
+.hero__title .char {
+  display: inline-block;
+  will-change: transform, opacity;
+}
+/* Bottom page marquee — seamless infinite loop */
+.page-marquee {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  height: 2.75rem;
+  display: flex;
+  align-items: center;
+  padding: 0;
+  overflow: hidden;
+  background: var(--bg, #FFF2E0);
+  border-top: 1px solid rgba(52, 23, 10, 0.1);
+  /* Soft side fade only — never clips vertically into the taskbar */
+  mask-image: linear-gradient(90deg, transparent 0%, #000 3%, #000 97%, transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 3%, #000 97%, transparent 100%);
+  pointer-events: none;
+  box-sizing: border-box;
+}
+.page-marquee__track {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  height: 100%;
+  backface-visibility: hidden;
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
+  /* animation starts only when .is-ready — after fonts, avoids loop hitch */
+  animation: none;
+}
+.page-marquee.is-ready .page-marquee__track {
+  animation: marquee-x 40s linear infinite;
+}
+.page-marquee__group {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 1.35rem;
+  padding-right: 1.35rem;
+  white-space: nowrap;
+  font-family: var(--font);
+  font-size: clamp(0.78rem, 1.35vw, 0.95rem);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--brown);
+}
+.page-marquee__group span {
+  color: var(--brown);
+  opacity: 0.88;
+  flex-shrink: 0;
+}
+.page-marquee__group i {
+  font-style: normal;
+  color: var(--primary);
+  opacity: 1;
+  font-size: 0.7em;
+  flex-shrink: 0;
+}
+/* Move exactly one group width (50% of 2 identical groups) — no jump */
+@keyframes marquee-x {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+
+.nav__logo:focus-visible,
+.nav__menu:focus-visible,
+.module-view__back:focus-visible {
+  /* `outline` alone doesn't work here — the reset at the top of this
+     file zeroes outline on every element with !important, which beats
+     specificity/order regardless of selector. Every other focus ring
+     in the codebase (login, workspace, side-menu) already uses this
+     box-shadow ring for that exact reason; these three were the only
+     ones still relying on the outline that gets silently defeated. */
+  outline: none;
+  box-shadow: var(--focus);
+  border-radius: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-marquee__track {
+    animation: none !important;
+    transform: none;
+    justify-content: center;
+    width: 100%;
+  }
+  .page-marquee__group:last-child {
+    display: none; /* one set of phrases, centered */
+  }
+  .page-marquee__group {
+    padding-right: 0;
+    justify-content: center;
+    flex-wrap: wrap;
+    white-space: normal;
+    row-gap: 0.35rem;
+  }
+}
+body.ws-login-open .page-marquee,
+body.in-module .page-marquee {
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
+body.ws-login-open .page-marquee__track,
+body.in-module .page-marquee__track {
+  animation-play-state: paused;
+}
+
+/* Chooser */
+.chooser-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(28px, 4vw, 56px);
+  justify-items: center;
+  max-width: 980px;
+  width: 100%;
+  margin: 0 auto;
+}
+.chooser-card.workspace {
+  --bg-color: #b55500;
+  --box-shadow-color: rgba(181, 85, 0, 0.28);
+}
+.chooser-card.tools {
+  --bg-color: #34170A;
+  --box-shadow-color: rgba(52, 23, 10, 0.32);
+}
+.chooser-cards .chooser-card {
+  width: 100%;
+  max-width: 450px;
+  min-height: clamp(280px, 36vh, 360px);
+  background: var(--surface);
+  border: 1px solid rgba(26, 18, 11, 0.1);
+  border-radius: 16px;
+  padding: 2.35rem 2.1rem 2.4rem;
+  text-align: center;
+  text-decoration: none;
+  color: inherit;
+  overflow: hidden;
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.8) inset,
+    0 8px 28px rgba(26, 18, 11, 0.04);
+  transition:
+    border-color 0.4s var(--ease),
+    box-shadow 0.4s var(--ease),
+    background 0.35s var(--ease),
+    transform 0.4s var(--ease);
+}
+.chooser-card-border {
+  position: absolute; inset: 0;
+  border: 1.5px solid var(--primary);
+  border-radius: 4px;
+  opacity: 0;
+  transform: rotate(8deg);
+  pointer-events: none;
+  z-index: 1;
+}
+.chooser-cards .chooser-card .overlay {
+  width: 118px; height: 118px;
+  position: absolute;
+  border-radius: 50%;
+  background: var(--bg-color);
+  top: 50%; left: 50%;
+  margin: -72px 0 0 -59px;
+  z-index: 0;
+  pointer-events: none;
+  transform: scale(0.15) translateZ(0);
+  will-change: transform;
+  transition: transform 0.45s var(--ease);
+}
+.chooser-cards .chooser-card:hover .overlay,
+.chooser-cards .chooser-card:focus-visible .overlay,
+.chooser-cards .chooser-card:active .overlay {
+  transform: scale(6.5) translateZ(0);
+}
+.chooser-card-meta {
+  display: flex; align-items: center; justify-content: center;
+  gap: 0.65rem; width: 100%; position: relative; z-index: 2;
+}
+.chooser-card-index {
+  font-size: 0.65rem; font-weight: 600; letter-spacing: 0.16em;
+  color: rgba(149, 70, 0, 0.92);
+  font-variant-numeric: tabular-nums; text-transform: uppercase;
+  transition: color 0.4s ease;
+}
+.chooser-card-node {
+  font-size: 0.6rem; font-weight: 500; letter-spacing: 0.18em;
+  text-transform: uppercase; color: rgba(26, 18, 11, 0.32);
+  transition: color 0.4s ease;
+}
+.chooser-cards .chooser-card .circle {
+  width: 88px; height: 88px; border-radius: 50%;
+  background: var(--surface);
+  border: 2.5px solid var(--bg-color);
+  display: flex; justify-content: center; align-items: center;
+  position: relative; z-index: 2; flex-shrink: 0;
+  margin: 0.15rem auto 0;
+  transition: border-color 0.5s var(--ease), background 0.5s var(--ease);
+}
+.chooser-cards .chooser-card .circle::after {
+  content: "";
+  width: 76px; height: 76px;
+  position: absolute;
+  background: var(--bg-color);
+  border-radius: 50%;
+  z-index: 0; opacity: 0;
+  transition: opacity 0.45s var(--ease);
+}
+.chooser-cards .chooser-card:hover .circle,
+.chooser-cards .chooser-card:focus-visible .circle,
+.chooser-cards .chooser-card:active .circle {
+  border-color: var(--on-fill);
+  background: var(--on-fill);
+}
+.chooser-cards .chooser-card:hover .circle::after,
+.chooser-cards .chooser-card:focus-visible .circle::after,
+.chooser-cards .chooser-card:active .circle::after {
+  opacity: 1;
+  background: var(--on-fill);
+}
+.chooser-cards .chooser-card .circle .icon,
+.chooser-cards .chooser-card .circle .icon svg {
+  position: relative; z-index: 2;
+  width: 34px; height: 34px; display: block;
+  color: var(--bg-color);
+}
+.chooser-cards .chooser-card:hover .circle .icon,
+.chooser-cards .chooser-card:hover .circle .icon svg,
+.chooser-cards .chooser-card:focus-visible .circle .icon,
+.chooser-cards .chooser-card:focus-visible .circle .icon svg,
+.chooser-cards .chooser-card:active .circle .icon,
+.chooser-cards .chooser-card:active .circle .icon svg {
+  color: var(--bg-color) !important;
+}
+.chooser-cards .chooser-card:hover .circle .icon svg *,
+.chooser-cards .chooser-card:focus-visible .circle .icon svg *,
+.chooser-cards .chooser-card:active .circle .icon svg * {
+  stroke: var(--bg-color) !important;
+}
+.chooser-cards .chooser-card .chooser-card-meta,
+.chooser-cards .chooser-card h3,
+.chooser-cards .chooser-card .card-arrow,
+.chooser-cards .chooser-card .chooser-card-foot,
+.chooser-cards .chooser-card .chooser-card-border {
+  position: relative; z-index: 2;
+}
+.chooser-card h3 {
+  margin: 0;
+  font-size: clamp(2.45rem, 4vw, 3.4375rem);
+  font-weight: 400;
+  font-family: var(--font-display);
+  color: var(--ink);
+  letter-spacing: 0.02em;
+  line-height: 1.08;
+  transition: letter-spacing 0.5s var(--ease), color 0.4s var(--ease);
+}
+.chooser-card .card-arrow {
+  width: 18px; height: 18px;
+  margin: 0.35rem auto 0;
+  color: var(--ink-soft);
+  display: flex; align-items: center; justify-content: center;
+  transition: color 0.4s var(--ease);
+}
+.chooser-card .card-arrow svg { width: 100%; height: 100%; display: block; }
+.chooser-card-foot {
+  position: absolute; left: 50%; bottom: 14px;
+  transform: translateX(-50%);
+  font-size: 0.58rem; font-weight: 600;
+  letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--primary);
+  background: var(--surface);
+  padding: 0 0.4rem;
+  opacity: 0; white-space: nowrap; z-index: 3;
+  transition: opacity 0.45s var(--ease), color 0.45s var(--ease), letter-spacing 0.45s var(--ease), background 0.45s var(--ease);
+  pointer-events: none;
+}
+.chooser-cards .chooser-card:hover,
+.chooser-cards .chooser-card:focus-visible {
+  opacity: 1;
+  border-radius: 14px;
+  border-color: transparent;
+  background: var(--bg-color);
+  will-change: transform;
+  transform: translate3d(0, -6px, 0) scale(1.015);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.5) inset,
+    0 22px 48px rgba(26, 18, 11, 0.1),
+    0 18px 40px var(--box-shadow-color);
+}
+.chooser-cards .chooser-card:active {
+  opacity: 1;
+  border-radius: 14px;
+  border-color: transparent;
+  background: var(--bg-color);
+  transform: translate3d(0, -2px, 0) scale(0.99);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.5) inset,
+    0 12px 28px rgba(26, 18, 11, 0.12),
+    0 10px 24px var(--box-shadow-color);
+  transition-duration: 0.15s;
+}
+.chooser-cards .chooser-card:hover .chooser-card-index,
+.chooser-cards .chooser-card:hover .chooser-card-node,
+.chooser-cards .chooser-card:focus-visible .chooser-card-index,
+.chooser-cards .chooser-card:focus-visible .chooser-card-node,
+.chooser-cards .chooser-card:active .chooser-card-index,
+.chooser-cards .chooser-card:active .chooser-card-node {
+  color: rgba(255, 242, 224, 0.85);
+}
+.chooser-cards .chooser-card:hover h3,
+.chooser-cards .chooser-card:focus-visible h3,
+.chooser-cards .chooser-card:active h3 {
+  color: var(--on-fill);
+  letter-spacing: 0.04em;
+}
+.chooser-cards .chooser-card:hover .card-arrow,
+.chooser-cards .chooser-card:focus-visible .card-arrow,
+.chooser-cards .chooser-card:active .card-arrow {
+  color: var(--on-fill);
+}
+.chooser-cards .chooser-card:hover .chooser-card-foot,
+.chooser-cards .chooser-card:focus-visible .chooser-card-foot,
+.chooser-cards .chooser-card:active .chooser-card-foot {
+  opacity: 1;
+  color: var(--on-fill);
+  background: transparent;
+  letter-spacing: 0.22em;
+}
+.chooser-cards .chooser-card {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Nav */
+.nav {
+  position: fixed; inset: 0 0 auto; z-index: 110;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1.65rem 2.4rem;
+}
+.nav__logo {
+  display: inline-flex; align-items: center; gap: .45rem;
+  color: var(--ink); text-decoration: none;
+  font-weight: 800; font-size: 1rem; letter-spacing: -.03em;
+  transition: color .35s ease, opacity .4s ease;
+}
+.nav__logo:hover { color: var(--primary); }
+.nav__mark { width: 18px; height: 18px; }
+.nav__right { display: flex; align-items: center; gap: .85rem; }
+.nav__num { font-size: .85rem; font-weight: 600; letter-spacing: .08em; color: var(--ink-soft); }
+
+.hero[hidden] { display: none !important; }
+
+.module-view {
+  position: fixed; inset: 0;
+  z-index: 2;
+  display: flex; flex-direction: column;
+  align-items: flex-start; justify-content: center;
+  padding: 6rem 8vw 4rem;
+  background: var(--bg);
+  color: var(--ink);
+}
+/* Workspace / Tools are full-bleed chrome apps, not the padded placeholder. */
+#view-workspace.module-view,
+#view-tools.module-view {
+  padding: 0;
+  align-items: stretch;
+  justify-content: flex-start;
+}
+.module-view[hidden] { display: none !important; }
+.module-view__kicker {
+  margin: 0 0 0.75rem;
+  font-size: .7rem; font-weight: 600;
+  letter-spacing: .22em; text-transform: uppercase;
+  color: var(--primary);
+}
+.module-view h2 {
+  margin: 0 0 0.85rem;
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 8vw, 6rem);
+  font-weight: 400; line-height: .95;
+  color: var(--brown);
+}
+.module-view p {
+  margin: 0 0 2rem;
+  max-width: 36ch;
+  color: var(--ink-soft);
+  font-size: 1.05rem; line-height: 1.55;
+}
+.module-view__back {
+  border: 1px solid rgba(52, 23, 10, 0.28);
+  background: var(--brown);
+  color: var(--on-fill);
+  font-family: var(--font);
+  font-size: .72rem; font-weight: 700;
+  letter-spacing: .18em; text-transform: uppercase;
+  padding: 0.9rem 1.4rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: transform .35s var(--ease), background .35s ease;
+}
+.module-view__back:hover { transform: translateY(-2px); background: #4a2412; }
+
+/* Tablet safety margin — keeps the nowrap title from ever crowding the
+   viewport edge before the 640px breakpoint switches it to wrapping. */
+@media (max-width: 900px) and (min-width: 641px) {
+  .hero__title { letter-spacing: 0.015em; font-size: clamp(2.4rem, 7vw, 5.4rem); }
+}
+
+@media (max-width: 640px) {
+  /* Scroll is a safety net, not the default experience — the sizing
+     below is tuned to fit a typical phone viewport without needing it,
+     but nothing gets silently clipped if a device is unusually short. */
+  html, body { overflow-y: auto; }
+  body { cursor: auto; overflow-x: hidden; }
+  html { overflow-x: hidden; }
+  .nav { padding: 1.1rem 1.4rem; }
+  .chooser-cards { grid-template-columns: 1fr; gap: 14px; }
+  .chooser-cards .chooser-card {
+    max-width: 100%;
+    min-height: 0;
+    padding: 1.5rem 1.5rem 1.7rem;
+    gap: 0.4rem;
+  }
+  .chooser-cards .chooser-card .circle {
+    width: 62px; height: 62px;
+    margin-top: 0;
+  }
+  .chooser-cards .chooser-card .circle::after { width: 52px; height: 52px; }
+  .chooser-cards .chooser-card .circle .icon,
+  .chooser-cards .chooser-card .circle .icon svg { width: 26px; height: 26px; }
+  .chooser-card h3 { font-size: clamp(1.7rem, 6vw, 2.2rem); }
+  .chooser-card .card-arrow { width: 16px; height: 16px; margin-top: 0.15rem; }
+  .chooser-card-foot { bottom: 10px; }
+  .hero {
+    padding: 4.5rem 1rem 4rem;
+    overflow-x: hidden;
+  }
+  .hero__eyebrow { margin-bottom: 0.6rem; }
+  .hero__title {
+    margin-bottom: 1.1rem;
+    white-space: normal;
+    font-size: clamp(2rem, 11vw, 3rem);
+  }
+}
+
+/* Short / landscape viewports — the default centered layout plus two
+   full-height cards can exceed the visible height. Keep cards side-by-side,
+   shrink vertical rhythm, and allow scrolling as a last-resort safety valve
+   instead of clipping content with no way to reach it. */
+@media (max-height: 560px) {
+  html, body { overflow-y: auto; }
+  .hero {
+    min-height: 100%;
+    padding: 4rem 1.5rem 3rem;
+    justify-content: flex-start;
+  }
+  .hero__eyebrow { margin-bottom: 0.5rem; }
+  .hero__title {
+    white-space: normal;
+    margin-bottom: 0.6rem;
+    font-size: clamp(1.6rem, 5.5vw, 2.6rem);
+  }
+  .chooser-cards { grid-template-columns: 1fr 1fr; gap: 14px; max-width: 640px; }
+  .chooser-cards .chooser-card {
+    min-height: 150px;
+    padding: 1.3rem 1.1rem 1.5rem;
+  }
+  .chooser-cards .chooser-card .circle {
+    width: 52px; height: 52px; margin-top: 0;
+  }
+  .chooser-cards .chooser-card .circle::after { width: 44px; height: 44px; }
+  .chooser-cards .chooser-card .circle .icon,
+  .chooser-cards .chooser-card .circle .icon svg { width: 20px; height: 20px; }
+  .chooser-card h3 { font-size: clamp(1.3rem, 3.4vw, 1.8rem); }
+  .chooser-card-foot { bottom: 8px; }
+  .page-marquee { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-lines span { animation: none; opacity: .15; }
+  body { cursor: auto; }
+  .chooser-cards .chooser-card:hover .overlay,
+  .chooser-cards .chooser-card:focus-visible .overlay,
+  .chooser-cards .chooser-card:active .overlay {
+    transform: scale(6.5);
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  body { cursor: auto; }
+}
+
+/* Keyboard users need a reliable focus indicator after the visual reset above. */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--primary, #B55500) !important;
+  outline-offset: 3px !important;
+}
+
+/* Login fields use underline focus — never the global orange box ring */
+.ws-login input:focus,
+.ws-login input:focus-visible,
+.ws-login input:active,
+.ws-login textarea:focus,
+.ws-login textarea:focus-visible {
+  outline: none !important;
+  outline-width: 0 !important;
+  outline-offset: 0 !important;
+  box-shadow: 0 0 0 40px #FFF2E0 inset !important;
+}
+
+
+/* =========================================================
+   HERO FOCUS RINGS — accessibility (global outline is suppressed)
+   ========================================================= */
+.nav__logo:focus-visible,
+.nav__menu:focus-visible,
+.chooser-card:focus-visible,
+.side-menu__nav a:focus-visible {
+  outline: 2px solid var(--primary, #B55500) !important;
+  outline-offset: 3px !important;
+  box-shadow: var(--focus, 0 0 0 2px #FFF2E0, 0 0 0 4px #B55500) !important;
+}
+
+
+
+/* Title must wrap before it clips on mid-size phones/tablets */
+@media (max-width: 900px) {
+  .hero__title {
+    white-space: normal;
+    max-width: min(100%, 16ch);
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+/* Ultrawide / large desktop — keep cards centered, not stretched */
+@media (min-width: 1400px) {
+  .chooser-cards {
+    max-width: 1040px;
+    gap: 48px;
+  }
+  .hero {
+    padding-top: 6rem;
+    padding-bottom: 7rem;
+  }
+}
+
+/* Touch: ensure menu button is ≥44px */
+.nav__menu {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Chooser card keyboard/touch active parity without hover dependency */
+@media (hover: none), (pointer: coarse) {
+  .chooser-cards .chooser-card:active {
+    transform: translateY(1px) scale(0.992);
+  }
+  .chooser-cards .chooser-card:focus-visible {
+    border-color: var(--primary, #B55500);
+  }
+}
+
+/* Noscript banner */
+.nexo-noscript {
+  margin: 0;
+  padding: 12px 16px;
+  background: #34170A;
+  color: #FFF2E0;
+  font: 600 13px/1.4 system-ui, sans-serif;
+  text-align: center;
+}

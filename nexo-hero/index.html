@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NEXO — Choose a system</title>
+  <meta name="description" content="NEXO workspace and tools in one place. Choose Workspace or Tools to continue — built for focused work." />
+  <meta name="theme-color" content="#FFF2E0" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="og.png" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="NEXO — Choose a system" />
+  <meta property="og:description" content="Pick Workspace or Tools to continue. One calm system for projects and controls." />
+  <meta property="og:image" content="og.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="NEXO — Choose a system" />
+  <meta name="twitter:description" content="Pick Workspace or Tools to continue. One calm system for projects and controls." />
+  <meta name="twitter:image" content="og.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=Onest:wght@500;700;800&family=Poiret+One&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="nexo-menu/menu.css" />
+  <link rel="stylesheet" href="nexo-wipe/wipe.css" />
+  <link rel="stylesheet" href="nexo-login/login.css" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="nexo-workspace/workspace.css" />
+  <link rel="stylesheet" href="nexo-tools/tools.css" />
+  <link rel="stylesheet" href="vendor/lenis.css" />
+  <link rel="stylesheet" href="nexo-scroll.css" />
+  <script>
+    /* Early session restore flag — runs before first paint to avoid hero flash */
+    (function () {
+      try {
+        var s = sessionStorage.getItem("nexo_active_system");
+        if (s === "workspace" || s === "tools") {
+          document.documentElement.classList.add("nexo-will-restore");
+        }
+      } catch (e) {}
+    })();
+  </script>
+  <style>
+    /* Hold a neutral cream screen while session restores — no hero flash */
+    html.nexo-will-restore body.is-booting .nav,
+    html.nexo-will-restore body.is-booting .hero__eyebrow,
+    html.nexo-will-restore body.is-booting .hero__title,
+    html.nexo-will-restore body.is-booting .chooser-cards,
+    html.nexo-will-restore body.is-booting .page-marquee,
+    html.nexo-will-restore body.is-booting .hero,
+    html.nexo-will-restore body.is-booting .motion-lines {
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+    html.nexo-will-restore body {
+      background: #FFF2E0 !important;
+    }
+    /* Smooth fade-in once the module view is shown */
+    html.nexo-will-restore .module-view.is-on {
+      animation: nexoRestoreIn 0.28s ease-out both;
+    }
+    @keyframes nexoRestoreIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+  </style>
+  <noscript>
+    <style>
+      /* If JS never runs, don't leave the hero permanently hidden — reveal it statically. */
+      body.is-booting .nav,
+      body.is-booting .hero__eyebrow,
+      body.is-booting .hero__title,
+      body.is-booting .chooser-cards,
+      body.is-booting .page-marquee {
+        opacity: 1 !important;
+        pointer-events: auto !important;
+      }
+      body { overflow: auto !important; }
+      html.nexo-will-restore body.is-booting .nav,
+      html.nexo-will-restore body.is-booting .hero__eyebrow,
+      html.nexo-will-restore body.is-booting .hero__title,
+      html.nexo-will-restore body.is-booting .chooser-cards,
+      html.nexo-will-restore body.is-booting .page-marquee {
+        opacity: 1 !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
+      }
+    </style>
+  </noscript>
+</head>
+<body class="is-booting">
+  <noscript>
+    <p class="nexo-noscript">NEXO needs JavaScript to open Workspace and Tools. Enable JavaScript, then reload.</p>
+  </noscript>
+
+  <div id="nexoLive" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+  <div id="nexoToast" class="nexo-toast" role="status" aria-live="off" aria-atomic="true" hidden>
+    <span id="nexoToastIcon" class="nexo-toast__icon" aria-hidden="true"></span>
+    <span id="nexoToastText"></span>
+    <button id="nexoToastAction" class="nexo-toast__action" type="button" hidden></button>
+  </div>
+  <div class="motion-lines" aria-hidden="true">
+    <span></span><span></span><span></span><span></span>
+  </div>
+
+  <div id="nexoWipe" class="nexo-wipe" aria-hidden="true">
+    <div class="pt__panel pt__panel--primary" id="nexoWipePrimary">
+      <svg class="pt__cap pt__cap--top" viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M 0 12 C 30 0 70 0 100 12 Z"></path>
+      </svg>
+      <svg class="pt__cap pt__cap--bottom" viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M 0 0 C 30 12 70 12 100 0 Z"></path>
+      </svg>
+    </div>
+    <div class="pt__panel pt__panel--ink" id="nexoWipeInk">
+      <svg class="pt__cap pt__cap--top" viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M 0 12 C 30 0 70 0 100 12 Z"></path>
+      </svg>
+      <svg class="pt__cap pt__cap--bottom" viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M 0 0 C 30 12 70 12 100 0 Z"></path>
+      </svg>
+      <p class="pt__label" id="nexoWipeLabel">Home</p>
+    </div>
+  </div>
+
+
+  <nav class="nav" aria-label="Primary">
+    <a class="nav__logo interactive" href="#home" aria-label="NEXO home">
+      <svg class="nav__mark" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 4.5h5.2L15.5 14.2V4.5H20v15h-5.2L8.5 9.8V19.5H4V4.5Z" fill="currentColor"/>
+      </svg>
+      <span>NEXO</span>
+    </a>
+    <div class="nav__right">
+      <span class="nav__num" aria-hidden="true">01</span>
+      <button type="button" class="nav__menu interactive" id="menuBtn" aria-expanded="false" aria-controls="sideMenu" aria-label="Open menu">
+        <span class="nav__menu-icon" aria-hidden="true">
+          <span class="nav__menu-line nav__menu-line--1"></span>
+          <span class="nav__menu-line nav__menu-line--2"></span>
+        </span>
+      </button>
+    </div>
+  </nav>
+
+  <div class="menu-overlay" id="menuOverlay" aria-hidden="true">
+    <div class="menu-scrim"></div>
+  </div>
+  <aside class="side-menu" id="sideMenu" role="dialog" aria-modal="true" aria-label="Site menu" aria-hidden="true">
+    <div class="side-menu__orange" aria-hidden="true">
+      <svg class="side-menu__orange-cap" viewBox="0 0 20 100" preserveAspectRatio="none">
+        <path d="M 16 0 C 6 22, 2 48, 6 72 C 9 88, 13 96, 16 100 L 20 100 L 20 0 Z"></path>
+      </svg>
+      <div class="side-menu__orange-body"></div>
+    </div>
+    <div class="side-menu__brown">
+      <svg class="side-menu__brown-cap" viewBox="0 0 20 100" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M 15.2 0 C 5.5 22, 1.8 48, 5.5 72 C 8.5 88, 12.5 96, 15.2 100 L 20 100 L 20 0 Z"></path>
+      </svg>
+      <div class="side-menu__sheet">
+        <div class="side-menu__inner">
+          <div class="side-menu__top">
+            <span class="side-menu__label">Menu</span>
+          </div>
+          <ul class="side-menu__nav">
+            <li><a href="#home" class="is-active interactive"><span class="side-menu__num">01</span> Home</a></li>
+            <li><a href="#workspace" class="interactive"><span class="side-menu__num">02</span> Workspace</a></li>
+            <li><a href="#tools" class="interactive"><span class="side-menu__num">03</span> Tools</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="hero" id="home">
+    <p class="hero__eyebrow" data-reveal>System index</p>
+    <h1 class="hero__title" aria-label="CHOOSE A SYSTEM">
+      <span class="hero__word" data-split>CHOOSE</span>
+      <span class="hero__word accent" data-split>A</span>
+      <span class="hero__word" data-split>SYSTEM</span>
+    </h1>
+    <div class="chooser-cards">
+      <a href="#workspace" class="chooser-card workspace" data-system="workspace" aria-label="Continue to Workspace — sign in required" title="Sign in to open Workspace">
+        <div class="chooser-card-border" aria-hidden="true"></div>
+        <div class="overlay" aria-hidden="true"></div>
+        <div class="chooser-card-meta">
+          <span class="chooser-card-index">02</span>
+          <span class="chooser-card-node">NODE</span>
+        </div>
+        <div class="circle" aria-hidden="true">
+          <span class="icon">
+            <svg viewBox="0 0 18 18" fill="none">
+              <rect x="2.5" y="2.5" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/>
+              <rect x="10.5" y="2.5" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/>
+              <rect x="2.5" y="10.5" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/>
+              <rect x="10.5" y="10.5" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/>
+            </svg>
+          </span>
+        </div>
+        <h3>Workspace</h3>
+        <span class="card-arrow" aria-hidden="true">
+          <svg viewBox="0 0 16 16" fill="none">
+            <path d="M3 8h10M9 4.5L12.5 8 9 11.5" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        <span class="chooser-card-foot">Continue to Workspace</span>
+      </a>
+
+      <a href="#tools" class="chooser-card tools" data-system="tools" aria-label="Continue to Tools — sign in required" title="Sign in to open Tools">
+        <div class="chooser-card-border" aria-hidden="true"></div>
+        <div class="overlay" aria-hidden="true"></div>
+        <div class="chooser-card-meta">
+          <span class="chooser-card-index">03</span>
+          <span class="chooser-card-node">NODE</span>
+        </div>
+        <div class="circle" aria-hidden="true">
+          <span class="icon">
+            <svg viewBox="0 0 18 18" fill="none">
+              <path d="M11.5 3.2l3.3 3.3M10.2 4.5l3.3 3.3M4 12.5l4.2-4.2 2.1 2.1L6.1 14.6H4v-2.1z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </div>
+        <h3>Tools</h3>
+        <span class="card-arrow" aria-hidden="true">
+          <svg viewBox="0 0 16 16" fill="none">
+            <path d="M3 8h10M9 4.5L12.5 8 9 11.5" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        <span class="chooser-card-foot">Continue to Tools</span>
+      </a>
+    </div>
+  </main>
+
+  <div class="ws-login" id="wsLogin" aria-hidden="true">
+    <div class="ws-login__split">
+      <div class="ws-login__brand" id="wsLoginBrand" aria-hidden="true">
+        <div class="ws-login__guides" id="wsLoginGuides">
+          <span class="ws-login__guide ws-login__guide--h1"></span>
+          <span class="ws-login__guide ws-login__guide--h2"></span>
+          <span class="ws-login__guide ws-login__guide--d1"></span>
+          <span class="ws-login__guide ws-login__guide--d2"></span>
+        </div>
+        <div class="ws-login__w-stage" id="wsWStage">
+          <span class="ws-login__origin"></span>
+          <svg class="ws-login__w-svg" id="wsMarkW" data-mark="w" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path class="ws-login__w-ghost" d="M18 28 L50 28 L76 130 L100 58 L124 130 L150 28 L182 28 L142 152 L112 152 L100 108 L88 152 L58 152 Z"/>
+            <path class="ws-login__w-stroke ws-login__w-stroke--1" d="M18 28 L50 28 L76 130"/>
+            <path class="ws-login__w-stroke ws-login__w-stroke--2" d="M76 130 L100 58"/>
+            <path class="ws-login__w-stroke ws-login__w-stroke--3" d="M100 58 L124 130"/>
+            <path class="ws-login__w-stroke ws-login__w-stroke--4" d="M124 130 L150 28 L182 28"/>
+            <path class="ws-login__w-stroke ws-login__w-stroke--5" d="M58 152 L88 152 L100 108 L112 152 L142 152"/>
+            <path class="ws-login__w-fill" d="M18 28 L50 28 L76 130 L100 58 L124 130 L150 28 L182 28 L142 152 L112 152 L100 108 L88 152 L58 152 Z"/>
+          </svg>
+          <svg class="ws-login__w-svg" id="wsMarkT" data-mark="t" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" hidden>
+            <path class="ws-login__w-ghost" d="M28 28 L172 28 L172 55 L118 55 L118 152 L82 152 L82 55 L28 55 Z"/>
+            <path class="ws-login__w-stroke ws-login__w-stroke--1" d="M28 42 L100 42"/>
+            <path class="ws-login__w-stroke ws-login__w-stroke--2" d="M100 42 L172 42"/>
+            <path class="ws-login__w-stroke ws-login__w-stroke--3" d="M100 42 L100 152"/>
+            <path class="ws-login__w-stroke ws-login__w-stroke--4" d="M100 100 L100 152"/>
+            <path class="ws-login__w-stroke ws-login__w-stroke--5" d="M82 152 L118 152"/>
+            <path class="ws-login__w-fill" d="M28 28 L172 28 L172 55 L118 55 L118 152 L82 152 L82 55 L28 55 Z"/>
+          </svg>
+        </div>
+        <span class="ws-login__meta-l" id="wsLoginMetaL">NEXO / SYSTEM 02</span>
+      </div>
+      <div class="ws-login__divider" aria-hidden="true">
+        <svg viewBox="0 0 56 1000" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M30 0 C 22 140, 40 280, 26 420 C 14 560, 42 700, 28 820 C 18 910, 34 960, 30 1000 L 56 1000 L 56 0 Z"/>
+        </svg>
+      </div>
+      <div class="ws-login__panel" role="dialog" aria-modal="true" aria-labelledby="wsLoginTitle">
+        <div class="ws-login__panel-inner">
+          <button type="button" class="ws-login__back interactive" id="wsLoginBack" aria-label="Back to system selection">
+            <span class="ws-login__back-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/>
+              </svg>
+            </span>
+            <span>Back to systems</span>
+          </button>
+          <h2 class="ws-login__title" id="wsLoginTitle"><span>Sign in to</span><span id="wsLoginTitleTarget">Workspace</span></h2>
+          <p class="ws-login__subtitle" id="wsLoginSubtitle">Use your NEXO credentials to enter this system.</p>
+          <p class="ws-login__hint" id="wsLoginHint">Demo access · <strong>admin</strong> / <strong>admin</strong></p>
+          <p class="ws-login__error" id="wsLoginError" role="alert" aria-live="assertive"></p>
+          <form class="ws-login__form" id="wsLoginForm" action="#" method="post" autocomplete="on" novalidate>
+            <div class="ws-login__field">
+              <label for="wsUser">Username</label>
+              <div class="ws-login__input" id="wsUserWrap">
+                <svg class="ws-login__input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="8" r="3.25"/>
+                  <path d="M5.5 19.5c.9-3.2 3.3-5 6.5-5s5.6 1.8 6.5 5"/>
+                </svg>
+                <input id="wsUser" name="username" type="text" placeholder="Your username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="100" required aria-describedby="wsLoginError" />
+              </div>
+            </div>
+            <div class="ws-login__field">
+              <label for="wsPass">Password</label>
+              <div class="ws-login__input pw-wrap" id="wsPassWrap">
+                <svg class="ws-login__input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="4" y="10" width="16" height="10" rx="1.5"/>
+                  <path d="M8 10V7a4 4 0 0 1 8 0v3"/>
+                </svg>
+                <input id="wsPass" name="password" type="password" placeholder="Enter your password" autocomplete="current-password" required aria-describedby="wsLoginError" />
+                <button type="button" class="ws-login__eye interactive" id="wsPassToggle" aria-label="Show password" aria-pressed="false">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="ws-login__field-row">
+                <button type="button" class="ws-login__forgot interactive" id="wsForgot">Forgot password?</button>
+              </div>
+            </div>
+            <button type="submit" class="ws-login__submit interactive" id="wsLoginSubmit">
+              <span class="ws-login__submit-label" id="wsLoginSubmitLabel">Sign in to Workspace</span>
+              <span class="ws-login__submit-arrow" aria-hidden="true">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 8h10"/><path d="M9 4.5L12.5 8 9 11.5"/>
+                </svg>
+              </span>
+              <span class="ws-login__submit-shine" aria-hidden="true"></span>
+            </button>
+          </form>
+        </div>
+        <span class="ws-login__meta-r">SECURE ACCESS · 2026</span>
+      </div>
+    </div>
+  </div>
+  <div class="carrot-rain" id="carrotRain" aria-hidden="true"></div>
+
+  <!-- ===== WORKSPACE (original NEXO phase-2 chrome) ===== -->
+    <section class="module-view" id="view-workspace" hidden aria-hidden="true">
+<aside class="nexo-rail" id="nexoRail" aria-label="Quick navigation">
+    <span class="nexo-rail__thumb" id="nexoRailThumb" aria-hidden="true"></span>
+    <span class="nexo-rail__edge" id="nexoRailEdge" aria-hidden="true"></span>
+    <button type="button" class="nexo-rail__logo" id="nexoRailHome" data-tip="Home" title="Home">W</button>
+    <div class="nexo-rail__mid">
+<button type="button" class="nexo-rail__btn is-active" data-page="dashboard" data-tip="Dashboard" aria-label="Dashboard">
+      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="3" y="3" width="6" height="6" rx="1.2" stroke="currentColor" stroke-width="1.5"/><rect x="11" y="3" width="6" height="6" rx="1.2" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="11" width="6" height="6" rx="1.2" stroke="currentColor" stroke-width="1.5"/><rect x="11" y="11" width="6" height="6" rx="1.2" stroke="currentColor" stroke-width="1.5"/></svg>
+    </button>
+    <button type="button" class="nexo-rail__btn" data-page="new" data-tip="New" aria-label="New">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M10 4v12M4 10h12" stroke-linecap="round"/></svg>
+    </button>
+    <button type="button" class="nexo-rail__btn" data-page="search" data-tip="Search" aria-label="Search">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="9" cy="9" r="5.5"/><path d="M13.5 13.5L17 17" stroke-linecap="round"/></svg>
+    </button>
+    <button type="button" class="nexo-rail__btn" data-page="all" data-tip="History" aria-label="History">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 5h12M4 10h12M4 15h8" stroke-linecap="round"/></svg>
+    </button>
+    <button type="button" class="nexo-rail__btn" data-page="trash" data-tip="Trash" aria-label="Trash">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 6h10l-.8 10.2A1 1 0 0113.2 17H6.8a1 1 0 01-1-.8L5 6zM8 6V4.5A1.5 1.5 0 019.5 3h1A1.5 1.5 0 0112 4.5V6M3.5 6h13" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <button type="button" class="nexo-rail__btn" data-page="parties" data-tip="Parties" aria-label="Parties">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="10" cy="7" r="2.5"/><path d="M4.5 16c0-2.5 2.5-4 5.5-4s5.5 1.5 5.5 4" stroke-linecap="round"/></svg>
+    </button>
+    <button type="button" class="nexo-rail__btn" data-page="ledger" data-tip="Ledger" aria-label="Ledger">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="4" y="3" width="12" height="14" rx="1.5"/><path d="M7 7h6M7 10h6M7 13h4" stroke-linecap="round"/></svg>
+    </button>
+    <button type="button" class="nexo-rail__btn" data-page="banks" data-tip="Banks" aria-label="Banks">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 8l7-4 7 4M4 8v7h12V8M2 16h16" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    </div>
+    <div class="nexo-rail__foot">
+    <button type="button" class="nexo-rail__btn" data-page="settings" data-tip="Settings" aria-label="Settings">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="10" cy="10" r="2.5"/><path d="M10 3.5v2M10 14.5v2M3.5 10h2M14.5 10h2M5.4 5.4l1.4 1.4M13.2 13.2l1.4 1.4M5.4 14.6l1.4-1.4M13.2 6.8l1.4-1.4" stroke-linecap="round"/></svg>
+    </button>
+    <button type="button" class="nexo-rail__btn rail-admin-only" data-page="admin" data-tip="Admin" aria-label="Admin">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M10 2.5l1.8 3.6 4 .6-2.9 2.8.7 4L10 11.8 6.4 13.5l.7-4L4.2 6.7l4-.6L10 2.5z" stroke-linejoin="round"/></svg>
+    </button>
+    </div>
+  </aside>
+
+<header class="nexo-shell" id="nexoShell" role="banner">
+    <div class="nexo-shell__left">
+      <button type="button" class="nexo-shell__rail-btn" id="nexoShellRailBtn" aria-label="Toggle sidebar" data-tip="Sidebar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+          <rect x="3" y="4" width="18" height="16" rx="2"/>
+          <path d="M9 4v16"/>
+        </svg>
+      </button>
+      <span class="nexo-shell__app">Workspace</span>
+    </div>
+    <div class="nexo-shell__right">
+      <button type="button" class="nexo-shell__btn nexo-shell__btn--icon" id="nexoShellBackup" aria-label="Backup" data-tip="Backup">
+        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2.5v8M5 7.5l3 3 3-3M3 12.5h10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button type="button" class="nexo-shell__btn nexo-shell__btn--icon" id="nexoShellRestore" aria-label="Restore" data-tip="Restore">
+        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 13.5v-8M5 8.5l3-3 3 3M3 3.5h10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button type="button" class="nexo-shell__btn nexo-shell__btn--exit" id="nexoShellExit" aria-label="Exit">
+        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3.5L2.5 8 6 12.5M2.5 8H13.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="label">Exit</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="topbar">
+    <div class="topbar-actions">
+      <div class="nexo-search nexo-search--top topbar-search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input id="topSearchInput" type="text" placeholder="Search party, slip no..." autocomplete="off" />
+        <kbd>/</kbd>
+      </div>
+    </div>
+    <div class="topbar-center">
+      <h1 class="topbar-page-title" id="topbarTitle">DASHBOARD</h1>
+      <p class="topbar-page-meta" id="topbarMeta"></p>
+    </div>
+    <div class="topbar-end">
+      <button type="button" class="btn" data-page="search" id="topbarFindBtn">Find</button>
+      <button type="button" class="btn primary" data-page="new" id="topbarNewBtn">+ New Slip</button>
+      <button type="button" class="btn" id="topbarBlankBtn" title="Start a blank new slip" hidden>+ Blank</button>
+      <button type="button" class="btn primary" id="topbarSaveBtn" title="Save (Ctrl+Enter)" hidden>Save</button>
+      <span class="search-result-pill" id="topbarSearchMeta" hidden>0 results</span>
+      <button type="button" class="btn primary" id="topbarSearchBtn" title="Run search" hidden>Search</button>
+      <span class="search-result-pill" id="topbarHistoryMeta" hidden>0 slips</span>
+      <button type="button" class="btn" id="topbarHistoryRefresh" title="Reload list" hidden>Refresh</button>
+      <button type="button" class="btn" id="topbarHistoryPrint" title="Print full register" hidden>Print</button>
+      <span class="nexo-del-slot nexo-del-slot--md"><button type="button" class="nexo-del nexo-del--md" id="topbarHistoryDelete" data-label="Delete" title="Move selected to Deleted" aria-label="Delete selected" hidden><span class="nexo-del__gfx" aria-hidden="true"><svg class="nexo-del__lid" viewBox="0 0 448 512" focusable="false"><path d="M135.2 17.7L128 32H32C14.3 32 0 46.3 0 64S14.3 96 32 96H416c17.7 0 32-14.3 32-32s-14.3-32-32-32H320l-7.2-14.3C307.4 6.8 296.3 0 284.2 0H163.8c-12.1 0-23.2 6.8-28.6 17.7z"/></svg><svg class="nexo-del__can" viewBox="0 0 448 512" focusable="false"><path d="M416 128H32L53.2 467c1.6 25.3 22.6 45 47.9 45H346.9c25.3 0 46.3-19.7 47.9-45L416 128z"/></svg></span></button></span>
+      <span class="search-result-pill" id="topbarTrashMeta" hidden>0 slips</span>
+      <button type="button" class="btn" id="topbarTrashRefresh" title="Reload list" hidden>Refresh</button>
+      <button type="button" class="btn" id="topbarTrashPrint" title="Print deleted register" hidden>Print</button>
+      <button type="button" class="btn primary" id="topbarTrashRestore" title="Restore selected slips" hidden>Restore selected</button>
+      <span class="nexo-del-slot nexo-del-slot--md"><button type="button" class="nexo-del nexo-del--md" id="topbarTrashDestroy" data-label="Delete" title="Permanently delete selected" aria-label="Permanently delete selected" hidden><span class="nexo-del__gfx" aria-hidden="true"><svg class="nexo-del__lid" viewBox="0 0 448 512" focusable="false"><path d="M135.2 17.7L128 32H32C14.3 32 0 46.3 0 64S14.3 96 32 96H416c17.7 0 32-14.3 32-32s-14.3-32-32-32H320l-7.2-14.3C307.4 6.8 296.3 0 284.2 0H163.8c-12.1 0-23.2 6.8-28.6 17.7z"/></svg><svg class="nexo-del__can" viewBox="0 0 448 512" focusable="false"><path d="M416 128H32L53.2 467c1.6 25.3 22.6 45 47.9 45H346.9c25.3 0 46.3-19.7 47.9-45L416 128z"/></svg></span></button></span>
+      <span class="search-result-pill" id="topbarPartiesMeta" hidden>0 parties</span>
+      <span class="search-result-pill" id="topbarBanksMeta" hidden>0 banks</span>
+      <span class="search-result-pill" id="topbarLedgerMeta" hidden>Select party</span>
+      <button type="button" class="btn" id="topbarLedgerReset" title="Clear filters" hidden>Reset</button>
+      <button type="button" class="btn" id="topbarLedgerPrint" title="Print ledger" hidden>Print</button>
+      <button type="button" class="btn" id="topbarLedgerExport" title="Export to CSV" hidden>Export CSV</button>
+      <span class="search-result-pill" id="topbarSettingsMeta" hidden>Settings</span>
+      <span class="search-result-pill" id="topbarAdminMeta" hidden>0 users</span>
+    </div>
+  </div>
+
+  <input type="file" id="nexoRestoreFile" accept=".json,application/json" hidden />
+
+  <div class="ws-stage" aria-label="Workspace">
+    <div class="ws-stage-body">
+    <div class="ws-stage__scroll">
+    <section class="ws-page is-active" id="ws-page-dashboard" data-ws-page="dashboard">
+      <div class="dash-cards" role="list">
+        <article class="stat-card kpi-card" data-page="all" role="listitem" tabindex="0">
+          <div class="pulse-ambient" aria-hidden="true"></div>
+          <div class="stat-card-top">
+            <div class="stat-icon icon-badge stat-icon-a" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6a2 2 0 0 1 2 2v14l-2.5-1.5L12 19l-2.5-1.5L7 19V5a2 2 0 0 1 2-2z"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="9" y1="12" x2="15" y2="12"/></svg>
+            </div>
+            <span class="status-capsule stat-trend flat" id="dCountTrend" aria-hidden="true"></span>
+          </div>
+          <div class="stat-card-body">
+            <p class="stat-label">Total slips</p>
+            <div class="stat-value-row">
+              <span class="stat-value" id="dCount">0</span>
+              <span class="stat-sub" id="dCountMeta">0 records · All time</span>
+            </div>
+          </div>
+          <div class="stat-card-footer">
+            <span class="stat-foot-meta">ALL TIME</span>
+            <span class="stat-card-hint action-link">HISTORY <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M14 5l7 7m0 0l-7 7m7-7H3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          </div>
+        </article>
+        <article class="stat-card kpi-card" data-page="all" role="listitem" tabindex="0">
+          <div class="pulse-ambient" aria-hidden="true"></div>
+          <div class="stat-card-top">
+            <div class="stat-icon icon-badge stat-icon-b" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20"/><circle cx="17" cy="14.5" r="1.6"/></svg>
+            </div>
+            <span class="status-capsule stat-trend up" id="dAmountTrend" aria-hidden="true"></span>
+          </div>
+          <div class="stat-card-body">
+            <p class="stat-label">Total amount</p>
+            <div class="stat-value-row">
+              <span class="stat-value" id="dAmount">0.00</span>
+              <span class="stat-sub" id="dAmountMeta">All time</span>
+            </div>
+          </div>
+          <div class="stat-card-footer">
+            <span class="stat-foot-meta">ALL TIME</span>
+            <span class="stat-card-hint action-link">HISTORY <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M14 5l7 7m0 0l-7 7m7-7H3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          </div>
+        </article>
+        <article class="stat-card kpi-card" data-page="search" data-today="1" role="listitem" tabindex="0">
+          <div class="pulse-ambient" aria-hidden="true"></div>
+          <div class="stat-card-top">
+            <div class="stat-icon icon-badge stat-icon-c" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><circle cx="12" cy="14.5" r="1.8" fill="currentColor" stroke="none"/></svg>
+            </div>
+            <span class="status-capsule stat-trend flat" id="dTodayTrend" aria-hidden="true"></span>
+          </div>
+          <div class="stat-card-body">
+            <p class="stat-label">Today</p>
+            <div class="stat-value-row">
+              <span class="stat-value" id="dToday">0</span>
+              <span class="stat-sub" id="dTodayMeta">0.00 today</span>
+            </div>
+          </div>
+          <div class="stat-card-footer">
+            <span class="stat-foot-meta">TODAY</span>
+            <span class="stat-card-hint action-link">FILTER <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M14 5l7 7m0 0l-7 7m7-7H3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          </div>
+        </article>
+        <article class="stat-card kpi-card" data-page="search" data-month="1" role="listitem" tabindex="0">
+          <div class="pulse-ambient" aria-hidden="true"></div>
+          <div class="stat-card-top">
+            <div class="stat-icon icon-badge stat-icon-d" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.5 6.5L21 9l-5 4.5L17.5 21 12 17l-5.5 4L8 13.5 3 9l6.5-.5z"/></svg>
+            </div>
+            <span class="status-capsule stat-trend flat" id="dMonthTrend" aria-hidden="true"></span>
+          </div>
+          <div class="stat-card-body">
+            <p class="stat-label">This month</p>
+            <div class="stat-value-row">
+              <span class="stat-value" id="dMonth">0</span>
+              <span class="stat-sub" id="dMonthMeta">0.00 this month</span>
+            </div>
+          </div>
+          <div class="stat-card-footer">
+            <span class="stat-foot-meta">THIS MONTH</span>
+            <span class="stat-card-hint action-link">REPORT <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M14 5l7 7m0 0l-7 7m7-7H3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          </div>
+        </article>
+      </div>
+
+      <div class="dash-charts" aria-label="Dashboard charts">
+        <article class="chart-panel chart-panel--analytics">
+          <header class="chart-panel__head">
+            <div class="chart-panel__title-row">
+              <span class="chart-panel__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-6 4 4 6-9 3 3"/><path d="M14 6h5v5"/></svg>
+              </span>
+              <div>
+                <h3 class="chart-panel__title">Money flow</h3>
+                <p class="chart-panel__sub">Monthly totals by amount</p>
+              </div>
+            </div>
+            <div class="chart-panel__head-right">
+              <div class="chart-panel__legend">
+                <span class="chart-legend chart-legend--expense"><i></i> Total</span>
+                <span class="chart-legend chart-legend--income"><i></i> Peak month</span>
+              </div>
+              <div class="flow-year-controls" role="group" aria-label="Chart year">
+                <button type="button" class="btn-small flow-year-btn" id="flowYearPrev" title="Previous year" aria-label="Previous year">‹</button>
+                <span class="panel-year" id="flowYear">2026</span>
+                <button type="button" class="btn-small flow-year-btn" id="flowYearNext" title="Next year" aria-label="Next year">›</button>
+              </div>
+            </div>
+          </header>
+          <div class="chart-line mf-chartjs" id="flowChart" role="img" aria-label="Money flow income and expenses"><canvas id="flowChartCanvas"></canvas></div>
+          <div class="flow-year-sum">Year total · <strong id="flowYearTotal">—</strong></div>
+        </article>
+
+        <article class="chart-panel chart-panel--report">
+          <header class="chart-panel__head">
+            <div class="chart-panel__title-row">
+              <span class="chart-panel__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+              </span>
+              <div>
+                <h3 class="chart-panel__title">Bank distribution</h3>
+                <p class="chart-panel__sub">Top banks by amount</p>
+              </div>
+            </div>
+          </header>
+          <div class="tx-report" id="bankReport" role="img" aria-label="Bank distribution by share"></div>
+        </article>
+      </div>
+
+      <section class="dash-tx-panel" aria-label="Recent transactions">
+        <header class="dash-tx-panel__head">
+          <div>
+            <h3 class="dash-tx-panel__title">Recent transactions</h3>
+          </div>
+          <button type="button" class="btn-small dash-tx-viewall" data-page="all" id="dashTxViewAll">View all</button>
+        </header>
+        <div class="dash-tx-table" id="dashTransactions" role="table" aria-label="Recent transactions list"></div>
+      </section>
+    </section>
+
+        <section class="ws-page" hidden id="ws-page-new" data-ws-page="new">
+
+      <div class="panel new-slip-panel">
+        <header class="new-slip-head">
+          <div class="session-bar" id="sessionBar" aria-live="polite">
+            <div class="session-bar-left">
+              <span class="session-stats">This session: <strong id="sessionCount">0</strong> slip(s) · <strong id="sessionTotal">0.00</strong> · last <strong id="sessionLastSr">—</strong></span>
+              <button type="button" class="btn session-undo-btn" id="undoLastSaveBtn" hidden>Undo last save</button>
+            </div>
+          </div>
+          <h2 class="new-slip-title">Enter transaction details</h2>
+          <p class="new-slip-keys" id="newSlipKeys">Ctrl+Enter save · Ctrl+Z last route · F2 duplicate · F3 blank</p>
+        </header>
+
+        <div class="grid new-slip-grid">
+          <!-- Row 1: Date + Serial -->
+          <div class="field">
+            <label for="slipDate">Slip date <span class="req-star" title="Required">*</span></label>
+            <input id="slipDate" type="date" aria-required="true" aria-describedby="err-slipDate" />
+            <div class="field-msg" id="err-slipDate" role="alert"></div>
+          </div>
+
+          <div class="field serial-voucher-field">
+            <div class="slipno-row serial-voucher-row">
+              <div class="sr-label-cell">
+                <label for="serialNo">SR / Serial no. <span class="req-star" title="Required">*</span></label>
+                <div class="sr-edit-status" id="srEditStatus" hidden>
+                  <span id="newEditBannerText">Editing</span>
+                  <button type="button" class="sr-edit-cancel" id="newEditCancelBtn">Cancel</button>
+                </div>
+              </div>
+              <div class="serial-input-wrap">
+                <input id="serialNo" aria-required="true" aria-describedby="err-serialNo srEditStatus" placeholder="e.g. 1" autocomplete="off" title="Type SR and press Enter to open. Use Up/Down to browse saved slips." />
+                <div class="sr-stepper" title="Step serial number">
+                  <button type="button" class="sr-step" id="srNextBtn" aria-label="Increase serial number">
+                    <svg viewBox="0 0 12 8" width="12" height="8" aria-hidden="true"><path d="M1 6.5L6 1.5L11 6.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </button>
+                  <button type="button" class="sr-step" id="srPrevBtn" aria-label="Decrease serial number">
+                    <svg viewBox="0 0 12 8" width="12" height="8" aria-hidden="true"><path d="M1 1.5L6 6.5L11 1.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="sr-btn-group">
+                <button type="button" class="btn-small sr-auto-btn" id="suggestSlipNoBtn" title="Fill next serial">Auto</button>
+                <button type="button" class="btn-small sr-new-btn" id="srNewBtnInline" title="Blank new slip">+ New</button>
+                <label class="btn-small sr-upload-btn" for="slipAttachFile" title="Upload slip screenshot from PC">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                  Upload
+                </label>
+                <input type="file" id="slipAttachFile" accept="image/*" multiple hidden />
+              </div>
+            </div>
+            <div class="field-msg" id="err-serialNo" role="alert"></div>
+            <ul class="slip-attach__list sr-attach-list" id="slipAttachList" aria-live="polite"></ul>
+          </div>
+
+          <!-- Row 2: From / To with swap -->
+          <div class="field">
+            <div class="field-label-row">
+              <label for="fromParty">From person / party <span class="req-star" title="Required">*</span></label>
+              <span class="last-route-row" id="lastRouteRow" hidden>
+                <button type="button" class="last-route-chip" id="lastRouteChip" title="Fill last From → To (Ctrl+Z)">Last route</button>
+              </span>
+            </div>
+            <div class="party-from-row">
+              <button type="button" class="swap-btn" id="swapPartiesBtn" title="Swap From and To" aria-label="Swap parties">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 16V4"/><path d="M3 8l4-4 4 4"/><path d="M17 8v12"/><path d="M13 16l4 4 4-4"/></svg>
+              </button>
+              <div class="party-pair-input autocomplete" style="flex:1;min-width:0;position:relative">
+                <input id="fromParty" autocomplete="off" placeholder="Type or select party" aria-required="true" aria-describedby="err-fromParty" />
+                <div class="suggestions" id="fromSuggest"></div>
+                <div class="field-msg" id="err-fromParty" role="alert"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="field">
+            <div class="field-label-row">
+              <label for="toParty">To person / party <span class="req-star" title="Required">*</span></label>
+            </div>
+            <div class="party-pair-input autocomplete" style="position:relative">
+              <input id="toParty" autocomplete="off" placeholder="Type or select party" aria-required="true" aria-describedby="err-toParty" />
+              <div class="suggestions" id="toSuggest"></div>
+              <div class="field-msg" id="err-toParty" role="alert"></div>
+            </div>
+          </div>
+
+          <!-- Status notes under From/To — zero layout shift (overlay style like field errors) -->
+          <div class="new-slip-fullrow form-status-slot" aria-live="polite">
+            <div class="same-party-warn" id="samePartyWarn" hidden role="status">From and To are the same party — check before saving.</div>
+          </div>
+
+<!-- Row 3: Amount + Bank -->
+          <div class="field amount-field">
+            <label for="amount">Amount <span class="req-star" title="Required">*</span></label>
+            <input id="amount" inputmode="decimal" placeholder="0.00" aria-required="true" aria-describedby="err-amount amountWords" />
+            <div class="amount-words" id="amountWords" hidden aria-live="polite"></div>
+            <div class="field-msg" id="err-amount" role="alert"></div>
+          </div>
+
+          <div class="field autocomplete">
+            <label for="bank">Bank <span class="req-star" title="Required">*</span></label>
+            <input id="bank" autocomplete="off" placeholder="Select or type bank" aria-required="true" aria-describedby="err-bank" />
+            <div class="suggestions" id="bankSuggest"></div>
+            <div class="field-msg" id="err-bank" role="alert"></div>
+          </div>
+
+          <!-- Row 4: Slip no + Remarks -->
+          <div class="field">
+            <label for="slipNo">Slip no. <span class="optional-tag">optional</span></label>
+            <input id="slipNo" placeholder="Any reference / voucher number" aria-describedby="err-slipNo" />
+            <div class="field-msg" id="err-slipNo" role="alert"></div>
+          </div>
+
+          <div class="field autocomplete">
+            <label for="remarks">Remarks <span class="optional-tag">optional</span></label>
+            <input id="remarks" placeholder="Optional note" autocomplete="off" />
+            <div class="suggestions" id="remarksSuggest"></div>
+          </div>
+        </div>
+
+        <div id="softWarn" class="soft-warn" hidden role="status"></div>
+        <div class="actions new-slip-actions">
+          <button class="btn primary new-slip-save" id="saveSlip" type="button" title="Ctrl+Enter">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+            <span class="label">Save slip</span>
+          </button>
+          <button class="btn" id="saveAndPrintBtn" type="button">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
+            <span class="label">Save & print</span>
+          </button>
+          <button class="btn" id="duplicateLastBtn" type="button" title="Copy From, To, Bank, Remarks from last saved slip. New serial. Date &amp; amount stay as on form.">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <span class="label">Duplicate last</span>
+          </button>
+          <button class="btn" id="clearForm" type="button">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            <span class="label">Clear</span>
+          </button>
+
+          <div class="dup-warn-strip" id="dupWarnStrip" hidden role="status">
+            <svg class="dup-warn-strip__icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+            <div class="dup-warn-strip__text" id="dupWarnText"></div>
+            <div class="dup-warn-strip__actions">
+              <button type="button" class="btn" id="dupWarnOpen">Open</button>
+              <button type="button" class="btn" id="dupWarnDismiss">Dismiss</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="ws-page" hidden id="ws-page-search" data-ws-page="search">
+      <div class="panel search-panel nexo-page-panel">
+        <div class="search-date-chips cir-tabs" id="searchDateChips" role="group" aria-label="Range">
+          <button type="button" class="chip cir-tabs__t" data-range="today" aria-pressed="false">Today</button>
+          <button type="button" class="chip cir-tabs__t" data-range="week" aria-pressed="false">This week</button>
+          <button type="button" class="chip cir-tabs__t" data-range="month" aria-pressed="false">This month</button>
+          <button type="button" class="chip cir-tabs__t" data-range="30" aria-pressed="false">Last 30 days</button>
+          <button type="button" class="chip cir-tabs__t" data-range="all" aria-pressed="false">All dates</button>
+        </div>
+        <div class="search-filters">
+          <div class="field"><label for="sFromDate">From date</label><input id="sFromDate" type="date" /></div>
+          <div class="field"><label for="sToDate">To date</label><input id="sToDate" type="date" /></div>
+          <div class="field autocomplete">
+            <label for="sParty">Party</label>
+            <input id="sParty" autocomplete="off" placeholder="Name contains…" />
+            <div class="suggestions" id="sPartySuggest" hidden></div>
+          </div>
+          <div class="field">
+            <label for="sPartySide">Party side</label>
+            <select id="sPartySide" data-list-only>
+              <option value="either">EITHER (FROM OR TO)</option>
+              <option value="from">FROM ONLY</option>
+              <option value="to">TO ONLY</option>
+            </select>
+          </div>
+          <div class="field"><label for="sBank">Bank</label><select id="sBank" data-clear-on-open><option value="">ALL BANKS</option></select></div>
+          <div class="field"><label for="sAmountMin">Min amount</label><input id="sAmountMin" inputmode="decimal" placeholder="e.g. 1000" /></div>
+          <div class="field"><label for="sAmountMax">Max amount</label><input id="sAmountMax" inputmode="decimal" placeholder="e.g. 500000" /></div>
+          <div class="field"><label for="sSlip">Slip no. / SR</label><input id="sSlip" placeholder="e.g. 12" /></div>
+        </div>
+        <div class="search-actions">
+          <button class="btn primary" id="doSearch" type="button">Search</button>
+          <button class="btn" id="clearSearch" type="button">Clear</button>
+          <span class="nexo-del-slot nexo-del-slot--md"><button class="nexo-del nexo-del--md" id="searchDeleteSelected" type="button" data-label="Delete" title="Move selected rows to Deleted" aria-label="Delete selected"><span class="nexo-del__gfx" aria-hidden="true"><svg class="nexo-del__lid" viewBox="0 0 448 512" focusable="false"><path d="M135.2 17.7L128 32H32C14.3 32 0 46.3 0 64S14.3 96 32 96H416c17.7 0 32-14.3 32-32s-14.3-32-32-32H320l-7.2-14.3C307.4 6.8 296.3 0 284.2 0H163.8c-12.1 0-23.2 6.8-28.6 17.7z"/></svg><svg class="nexo-del__can" viewBox="0 0 448 512" focusable="false"><path d="M416 128H32L53.2 467c1.6 25.3 22.6 45 47.9 45H346.9c25.3 0 46.3-19.7 47.9-45L416 128z"/></svg></span></button></span>
+          <div class="print-actions">
+            <button class="btn" id="printSearch" type="button">Print</button>
+          </div>
+        </div>
+        <div class="summary" id="searchSummary" aria-live="polite">0 slips | Total amount: 0.00</div>
+        <div class="nexo-pager nexo-pager--top" id="searchPagerTop" hidden aria-label="Search results pages (top)"></div>
+        <div class="empty-state" id="searchEmpty" hidden>
+          <strong>Search for transactions</strong>
+          <span>Enter a party name, slip number, or amount to find matching slips.</span>
+        </div>
+        <div id="searchTable" class="search-table-host"></div>
+        <div class="nexo-pager" id="searchPager" hidden aria-label="Search results pages"></div>
+      </div>
+    </section>
+
+    <section class="ws-page" hidden id="ws-page-all" data-ws-page="all">
+      <div class="panel history-panel nexo-page-panel">
+        
+        <!-- history filters bar removed -->
+        <div class="summary" id="allSummary" aria-live="polite">0 slips | Total amount: 0.00</div>
+        <div class="nexo-pager nexo-pager--top" id="allPagerTop" hidden aria-label="History pages (top)"></div>
+        <div id="allTable" class="history-table-host"></div>
+        <div class="nexo-pager" id="allPager" hidden aria-label="History pages"></div>
+      </div>
+    </section>
+
+    <section class="ws-page" hidden id="ws-page-trash" data-ws-page="trash">
+      <div class="panel nexo-page-panel">
+        <div class="summary" id="trashSummary" aria-live="polite">0 slips | Total amount: 0.00</div>
+        <div class="empty-state" id="trashEmpty">
+          <span class="empty-state-title">Trash is empty</span>
+          <span class="empty-state-hint">Deleted slips appear here. Restore or permanently remove them.</span>
+        </div>
+        <div id="trashTable" class="history-table-host"></div>
+      </div>
+    </section>
+
+    <section class="ws-page" hidden id="ws-page-parties" data-ws-page="parties">
+      <div class="panel parties-panel nexo-page-panel">
+        <div class="parties-add-row">
+          <div class="field grow">
+            <label for="newParty">New party</label>
+            <input id="newParty" placeholder="Party name" autocomplete="off" />
+            <div class="field-msg" id="err-newParty" role="alert"></div>
+          </div>
+          <button class="btn primary parties-add-btn" id="addParty" type="button">Add party</button>
+        </div>
+        <div class="toolbar parties-toolbar">
+          <div class="nexo-search nexo-search--page parties-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input id="partyFilter" placeholder="Search parties…" autocomplete="off" aria-label="Search parties" />
+          </div>
+          <div class="parties-filters" role="group" aria-label="Party filters">
+            <button type="button" class="chip cir-tabs__t is-active" data-party-filter="all">All</button>
+            <button type="button" class="chip cir-tabs__t" data-party-filter="active">With slips</button>
+            <button type="button" class="chip cir-tabs__t" data-party-filter="unused">Unused</button>
+            <button type="button" class="chip cir-tabs__t" data-party-filter="dr">Balance DR</button>
+            <button type="button" class="chip cir-tabs__t" data-party-filter="cr">Balance CR</button>
+          </div>
+          <button type="button" class="btn" id="partiesExportCsv" title="Export parties CSV">Export CSV</button>
+        </div>
+        <div class="parties-summary" id="partiesSummary" aria-live="polite"></div>
+        <div id="partyTable" class="party-table-host"></div>
+      </div>
+    </section>
+
+    <section class="ws-page" hidden id="ws-page-ledger" data-ws-page="ledger">
+      <div class="panel nexo-page-panel ledger-panel">
+        <div class="ledger-toolbar">
+          <div class="ledger-filters">
+            <div class="field"><label for="ledgerParty">Party Account</label><select id="ledgerParty" autocomplete="off"><option value="">Select party</option></select></div>
+            <div class="field"><label for="ledgerFrom">From Date</label><input id="ledgerFrom" type="date" /></div>
+            <div class="field"><label for="ledgerTo">To Date</label><input id="ledgerTo" type="date" /></div>
+          </div>
+          <div class="ledger-actions">
+            <button class="btn primary" id="viewLedger" type="button" title="View ledger">View ledger</button>
+            <button class="btn" id="printLedger" type="button" title="Print ledger">Print</button>
+            <button class="btn" id="ledgerSettingsBtn" type="button" title="Print settings" data-page="settings">Settings</button>
+            <button class="btn" id="exportLedger" type="button" title="Export ledger CSV">Export CSV</button>
+            <button class="btn" id="resetLedger" type="button" title="Clear dates" hidden>Reset</button>
+          </div>
+        </div>
+        <div id="ledgerSummary" class="ledger-summary"></div>
+        <div id="ledgerTable" class="ledger-table-host"></div>
+      </div>
+    </section>
+
+    <section class="ws-page" hidden id="ws-page-banks" data-ws-page="banks">
+      <div class="panel banks-panel nexo-page-panel">
+        <div class="toolbar banks-toolbar">
+          <div class="field grow">
+            <label for="newBank">New bank</label>
+            <input id="newBank" placeholder="Bank name" autocomplete="off" />
+            <div class="field-msg" id="err-newBank" role="alert"></div>
+          </div>
+          <button class="btn primary" id="addBank" type="button">Add bank</button>
+          <div class="field grow">
+            <label for="bankFilter">Filter</label>
+            <div class="filter-row">
+              <div class="nexo-search nexo-search--page">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input id="bankFilter" placeholder="Search banks…" autocomplete="off" />
+              </div>
+              <button type="button" class="btn" id="clearBankFilter" hidden>Clear</button>
+            </div>
+          </div>
+        </div>
+        <p class="legend">Banks used on slips or in Deleted cannot be removed — rename instead</p>
+        <div id="bankTable" class="party-table-host"></div>
+      </div>
+    </section>
+
+    <section class="ws-page" hidden id="ws-page-settings" data-ws-page="settings">
+      <div class="panel nexo-page-panel">
+        <div class="panel-head-row">
+          <h3 class="panel-title">Database &amp; Data Tools</h3>
+          <span class="panel-head-meta">Data integrity</span>
+        </div>
+        <div class="settings-stats cards-mini">
+          <div class="settings-stat card-mini"><span class="label">Active slips</span><strong class="value" id="setSlips">0</strong></div>
+          <div class="settings-stat card-mini"><span class="label">Deleted slips</span><strong class="value" id="setTrash">0</strong></div>
+          <div class="settings-stat card-mini"><span class="label">Parties</span><strong class="value" id="setParties">0</strong></div>
+          <div class="settings-stat card-mini"><span class="label">Ledger entries</span><strong class="value" id="setTx">0</strong></div>
+        </div>
+        <div class="search-actions settings-actions">
+          <button class="btn primary" id="settingsBackup" type="button" title="Backup all data">Backup All Data</button>
+          <button class="btn" id="settingsRestore" type="button" title="Restore from backup">Restore Backup</button>
+          <button class="btn" id="settingsCsv" type="button" title="Export slips as CSV">Export Slips CSV</button>
+          <input id="settingsRestoreFile" type="file" accept=".json,application/json" hidden />
+          <button class="btn danger" id="clearDatabase" type="button" title="Permanently erase all data">Clear All Data</button>
+        </div>
+        <div id="settingsMsg" class="settings-msg" hidden role="alert"></div>
+      </div>
+
+      <div class="panel nexo-page-panel" id="printSettingsPanel" style="margin-top:16px">
+        <div class="panel-head-row">
+          <h3 class="panel-title">Print settings</h3>
+          <span class="panel-head-meta">Applies to Search · History · Ledger · Trash</span>
+        </div>
+        <p class="legend">One shared layout for every report. Change here — not on each page.</p>
+        <div class="ps-layout">
+          <div class="ps-preview">
+            <div class="ps-preview-label">Live preview</div>
+            <div class="ps-preview-sheet" id="psPreviewSheet">
+              <div class="prev-brand"><span class="prev-dot"></span>NEXO · Report</div>
+              <div class="prev-title">Transaction Report</div>
+              <div class="prev-subtitle">Sample results</div>
+              <table class="preview-table">
+                <thead><tr><th>Date</th><th>Party</th><th>Amount</th></tr></thead>
+                <tbody>
+                  <tr><td>05-09</td><td>Bin Ismail</td><td>125,000</td></tr>
+                  <tr><td>04-09</td><td>Qazafi</td><td>88,000</td></tr>
+                  <tr><td>03-09</td><td>Al Rehman</td><td>42,500</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="ps-controls">
+            <div class="ps-grid">
+              <div class="field"><label for="psFont">Font</label>
+                <select id="psFont">
+                  <option value="'Inter', 'Segoe UI', system-ui, Arial, sans-serif">Inter</option>
+                  <option value="'Segoe UI', Arial, sans-serif">Segoe UI</option>
+                  <option value="Arial, Helvetica, sans-serif">Arial</option>
+                  <option value="'Times New Roman', Times, serif">Times</option>
+                  <option value="Georgia, serif">Georgia</option>
+                </select>
+              </div>
+              <div class="field"><label for="psTitleSize">Title size</label><input id="psTitleSize" type="number" min="12" max="40" step="0.5" value="26" /></div>
+              <div class="field"><label for="psSubtitleSize">Subtitle size</label><input id="psSubtitleSize" type="number" min="8" max="20" step="0.5" value="12" /></div>
+              <div class="field"><label for="psHeaderSize">Header size</label><input id="psHeaderSize" type="number" min="7" max="18" step="0.5" value="10.5" /></div>
+              <div class="field"><label for="psHeaderWeight">Header weight</label>
+                <select id="psHeaderWeight"><option value="400">Normal</option><option value="700" selected>Bold</option><option value="800">Extra</option></select>
+              </div>
+              <div class="field"><label for="psBodySize">Body size</label><input id="psBodySize" type="number" min="7" max="18" step="0.5" value="11" /></div>
+              <div class="field"><label for="psMetaSize">Meta size</label><input id="psMetaSize" type="number" min="7" max="16" step="0.5" value="11.5" /></div>
+              <div class="field"><label for="psLetterSpacing">Letter spacing</label>
+                <select id="psLetterSpacing"><option value="normal">Normal</option><option value="wide">Wide</option></select>
+              </div>
+              <div class="field"><label for="psTitleAlign">Title align</label>
+                <select id="psTitleAlign"><option value="center">Center</option><option value="left">Left</option></select>
+              </div>
+              <div class="field"><label for="psColAlign">Column align</label>
+                <select id="psColAlign"><option value="center">Center</option><option value="left">Left</option><option value="right">Right</option></select>
+              </div>
+              <div class="field"><label for="psCellVPad">Cell V pad</label><input id="psCellVPad" type="number" min="2" max="24" value="7" /></div>
+              <div class="field"><label for="psCellHPad">Cell H pad</label><input id="psCellHPad" type="number" min="2" max="24" value="8" /></div>
+              <div class="field"><label for="psRowHeight">Row height</label><input id="psRowHeight" type="number" min="18" max="48" value="28" /></div>
+              <div class="field"><label for="psPageSize">Page size</label>
+                <select id="psPageSize"><option value="A4">A4</option><option value="Letter">Letter</option></select>
+              </div>
+              <div class="field"><label for="psOrientation">Orientation</label>
+                <select id="psOrientation"><option value="portrait">Portrait</option><option value="landscape">Landscape</option></select>
+              </div>
+              <div class="field"><label for="psScale">Scale %</label><input id="psScale" type="number" min="70" max="120" value="100" /></div>
+              <div class="field"><label for="psMarginTop">Margin top mm</label><input id="psMarginTop" type="number" min="4" max="30" value="12" /></div>
+              <div class="field"><label for="psMarginRight">Margin right mm</label><input id="psMarginRight" type="number" min="4" max="30" value="10" /></div>
+              <div class="field"><label for="psMarginBottom">Margin bottom mm</label><input id="psMarginBottom" type="number" min="4" max="30" value="12" /></div>
+              <div class="field"><label for="psMarginLeft">Margin left mm</label><input id="psMarginLeft" type="number" min="4" max="30" value="10" /></div>
+              <div class="field"><label for="psRowBorderWidth">Row border</label><input id="psRowBorderWidth" type="number" min="0" max="3" step="0.5" value="1" /></div>
+              <div class="field"><label for="psHeaderBorderWidth">Header border</label><input id="psHeaderBorderWidth" type="number" min="0" max="3" step="0.5" value="1.5" /></div>
+              <div class="field"><label for="psRowBorderColor">Row color</label><input id="psRowBorderColor" type="color" value="#000000" /></div>
+              <div class="field"><label for="psHeaderBorderColor">Header color</label><input id="psHeaderBorderColor" type="color" value="#000000" /></div>
+              <div class="field"><label for="psHeaderBg">Header bg</label><input id="psHeaderBg" type="color" value="#f0f0f0" /></div>
+              <div class="field"><label for="psAltRowColor">Alt row</label><input id="psAltRowColor" type="color" value="#f5f5f5" /></div>
+              <div class="field"><label for="psBodyText">Body text</label><input id="psBodyText" type="color" value="#111111" /></div>
+              <div class="field"><label for="psHeaderText">Header text</label><input id="psHeaderText" type="color" value="#111111" /></div>
+              <div class="field"><label for="psAccent">Accent</label><input id="psAccent" type="color" value="#111111" /></div>
+              <div class="field"><label for="psBrandLabel">Brand label</label><input id="psBrandLabel" type="text" value="NEXO · Report" /></div>
+            </div>
+            <div class="ps-checks">
+              <label class="ps-check"><input type="checkbox" id="psAutoFit" checked /> Auto-fit cells</label>
+              <label class="ps-check"><input type="checkbox" id="psRowBorder" checked /> Row borders</label>
+              <label class="ps-check"><input type="checkbox" id="psOuterBorder" checked /> Outer border</label>
+              <label class="ps-check"><input type="checkbox" id="psColDividers" checked /> Column dividers</label>
+              <label class="ps-check"><input type="checkbox" id="psAltRow" /> Alternate row shading</label>
+              <label class="ps-check"><input type="checkbox" id="psShowBrand" checked /> Show brand</label>
+              <label class="ps-check"><input type="checkbox" id="psShowTitle" checked /> Show title</label>
+              <label class="ps-check"><input type="checkbox" id="psShowSubtitle" checked /> Show subtitle</label>
+              <label class="ps-check"><input type="checkbox" id="psShowMeta" checked /> Show meta</label>
+              <label class="ps-check"><input type="checkbox" id="psShowTimestamp" checked /> Show timestamp</label>
+            </div>
+            <div class="search-actions settings-actions" style="border:0;padding-top:8px;margin-top:8px">
+              <button class="btn primary" id="psSaveBtn" type="button">Save print settings</button>
+              <button class="btn" id="psResetBtn" type="button">Reset defaults</button>
+              <button class="btn" id="psTestPrint" type="button">Test print</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="ws-page" hidden id="ws-page-admin" data-ws-page="admin">
+      <div class="panel nexo-page-panel admin-panel">
+        <div class="panel-head-row">
+          <h3 class="panel-title">Workspace overview</h3>
+          <span class="panel-head-meta" id="adminSessionMeta">Live register</span>
+        </div>
+        <div class="settings-stats cards-mini">
+          <div class="settings-stat card-mini"><span class="label">Slips</span><strong class="value" id="adminSlips">0</strong></div>
+          <div class="settings-stat card-mini"><span class="label">Trash</span><strong class="value" id="adminTrash">0</strong></div>
+          <div class="settings-stat card-mini"><span class="label">Parties</span><strong class="value" id="adminParties">0</strong></div>
+          <div class="settings-stat card-mini"><span class="label">Banks</span><strong class="value" id="adminBanks">0</strong></div>
+          <div class="settings-stat card-mini"><span class="label">Users</span><strong class="value" id="adminUsersCount">0</strong></div>
+        </div>
+        <div class="admin-grid">
+          <div class="admin-card">
+            <h4 class="admin-card__title">Signed in</h4>
+            <p class="admin-card__body" id="adminSignedIn">Administrator</p>
+            <p class="legend" id="adminHealth">Register is healthy.</p>
+          </div>
+          <div class="admin-card">
+            <h4 class="admin-card__title">Desk actions</h4>
+            <div class="admin-actions">
+              <button type="button" class="btn" data-page="settings">Open settings</button>
+              <button type="button" class="btn" id="adminBackupBtn">Backup now</button>
+              <button type="button" class="btn" id="adminCsvBtn">Export CSV</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="admin-users" style="margin-top:20px">
+          <div class="panel-head-row">
+            <h3 class="panel-title">Users</h3>
+            <span class="panel-head-meta" id="adminUsersMeta">Manage access</span>
+          </div>
+          <div class="toolbar parties-toolbar" style="margin-bottom:12px">
+            <div class="field grow"><label for="adminUserName">Name</label><input id="adminUserName" placeholder="Full name" autocomplete="off" /></div>
+            <div class="field grow"><label for="adminUserUsername">Username</label><input id="adminUserUsername" placeholder="login id" autocomplete="off" /></div>
+            <div class="field"><label for="adminUserRole">Role</label>
+              <select id="adminUserRole">
+                <option value="admin">Admin</option>
+                <option value="manager">Manager</option>
+                <option value="clerk">Clerk</option>
+                <option value="viewer">Viewer</option>
+              </select>
+            </div>
+            <div class="field grow"><label for="adminUserWorkspace">Workspace</label><input id="adminUserWorkspace" placeholder="Main desk" value="Main desk" /></div>
+            <button class="btn primary" id="adminAddUser" type="button">+ Add user</button>
+          </div>
+          <p class="legend">Passwords: admin role → <strong>admin</strong> · other roles → username. Prefer Disable over deleting the last admin.</p>
+          <div id="adminUsersTable" class="party-table-host"></div>
+        </div>
+
+        <div class="admin-recent" style="margin-top:20px">
+          <div class="panel-head-row">
+            <h3 class="panel-title">Recent activity</h3>
+            <span class="panel-head-meta">Latest slips</span>
+          </div>
+          <div id="adminRecent" class="history-table-host"></div>
+        </div>
+      </div>
+    </section>
+
+    </div><!-- /ws-stage__scroll -->
+    </div><!-- /ws-stage-body -->
+  </div><!-- /ws-stage -->
+
+<div class="menu-overlay" id="wsMenuOverlay" aria-hidden="true">
+    <div class="menu-scrim"></div>
+  </div>
+  <aside class="side-menu" id="wsSideMenu" role="dialog" aria-modal="true" aria-label="Workspace menu" aria-hidden="true">
+    <div class="side-menu__orange" aria-hidden="true">
+      <svg class="side-menu__orange-cap" viewBox="0 0 20 100" preserveAspectRatio="none">
+        <path d="M 16 0 C 6 22, 2 48, 6 72 C 9 88, 13 96, 16 100 L 20 100 L 20 0 Z"></path>
+      </svg>
+      <div class="side-menu__orange-body"></div>
+    </div>
+    <div class="side-menu__brown">
+      <svg class="side-menu__brown-cap" viewBox="0 0 20 100" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M 15.2 0 C 5.5 22, 1.8 48, 5.5 72 C 8.5 88, 12.5 96, 15.2 100 L 20 100 L 20 0 Z"></path>
+      </svg>
+      <div class="side-menu__sheet">
+        <div class="side-menu__inner">
+          <div class="side-menu__top">
+            <span class="side-menu__label">Menu</span>
+          </div>
+          <ul class="side-menu__nav" id="wsSideNav">
+            <li><a href="#" data-page="dashboard" class="is-active"><span class="side-menu__num">01</span> Dashboard</a></li>
+            <li><a href="#" data-page="new"><span class="side-menu__num">02</span> New</a></li>
+            <li><a href="#" data-page="search"><span class="side-menu__num">03</span> Search</a></li>
+            <li><a href="#" data-page="all"><span class="side-menu__num">04</span> History</a></li>
+            <li><a href="#" data-page="trash"><span class="side-menu__num">05</span> Trash</a></li>
+            <li><a href="#" data-page="parties"><span class="side-menu__num">06</span> Parties</a></li>
+            <li><a href="#" data-page="ledger"><span class="side-menu__num">07</span> Ledger</a></li>
+            <li><a href="#" data-page="banks"><span class="side-menu__num">08</span> Banks</a></li>
+            <li><a href="#" data-page="settings"><span class="side-menu__num">09</span> Settings</a></li>
+            <li class="rail-admin-only"><a href="#" data-page="admin"><span class="side-menu__num">10</span> Admin</a></li>
+          </ul>
+          <div class="side-menu__footer">
+            <div class="side-menu__toggle-row">
+              <span>
+                <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2" y="2" width="4" height="12" rx="1" stroke="currentColor" stroke-width="1.3"/><path d="M8 4h6M8 8h5M8 12h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                Icon rail
+              </span>
+              <button type="button" class="side-menu__switch is-on" id="nexoRailToggle" role="switch" aria-checked="true" aria-label="Show icon rail" title="Show or hide the left icon rail">
+                <span class="side-menu__switch-knob" aria-hidden="true"></span>
+              </button>
+            </div>
+            <button type="button" class="side-menu__action" id="nexoBtnExportCsv">
+              <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2" y="2.5" width="12" height="11" rx="1.2" stroke="currentColor" stroke-width="1.3"/><path d="M2 6.5h12M6 6.5v7" stroke="currentColor" stroke-width="1.3"/></svg>
+              Export CSV
+            </button>
+            <button type="button" class="side-menu__action" id="nexoBtnBackup">
+              <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2.5v8M5 7.5l3 3 3-3M3 12.5h10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Backup
+            </button>
+            <button type="button" class="side-menu__action" id="nexoBtnRestore">
+              <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 13.5v-8M5 8.5l3-3 3 3M3 3.5h10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Restore
+            </button>
+            <button type="button" class="side-menu__action" id="nexoExitHome" data-ws-exit>
+              <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3.5L2.5 8 6 12.5M2.5 8H13.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Exit Workspace
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <button type="button" class="nav__menu nav__menu--shell interactive" id="wsMenuBtn" aria-expanded="false" aria-controls="wsSideMenu" aria-label="Open menu">
+    <span class="nav__menu-icon" aria-hidden="true">
+      <span class="nav__menu-line nav__menu-line--1"></span>
+      <span class="nav__menu-line nav__menu-line--2"></span>
+    </span>
+  </button>
+
+
+  <!-- Mobile bottom navigation (≤900px) -->
+  <nav class="ws-bottom-nav" id="wsBottomNav" aria-label="Primary navigation">
+    <button type="button" class="ws-bottom-nav__item is-active" data-page="dashboard" aria-label="Dashboard">
+      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="3" y="3" width="6" height="6" rx="1.2" stroke="currentColor" stroke-width="1.5"/><rect x="11" y="3" width="6" height="6" rx="1.2" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="11" width="6" height="6" rx="1.2" stroke="currentColor" stroke-width="1.5"/><rect x="11" y="11" width="6" height="6" rx="1.2" stroke="currentColor" stroke-width="1.5"/></svg>
+      <span>Home</span>
+    </button>
+    <button type="button" class="ws-bottom-nav__item" data-page="search" aria-label="Search">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="9" cy="9" r="5.5"/><path d="M13.5 13.5L17 17" stroke-linecap="round"/></svg>
+      <span>Search</span>
+    </button>
+    <button type="button" class="ws-bottom-nav__item ws-bottom-nav__item--fab" data-page="new" aria-label="New slip">
+      <span class="ws-bottom-nav__fab">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M10 4v12M4 10h12" stroke-linecap="round"/></svg>
+      </span>
+      <span>New</span>
+    </button>
+    <button type="button" class="ws-bottom-nav__item" data-page="all" aria-label="History">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 5h12M4 10h12M4 15h8" stroke-linecap="round"/></svg>
+      <span>History</span>
+    </button>
+    <button type="button" class="ws-bottom-nav__item" data-page="parties" aria-label="More" id="wsBottomMore">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="10" cy="7" r="2.5"/><path d="M4.5 16c0-2.5 2.5-4 5.5-4s5.5 1.5 5.5 4" stroke-linecap="round"/></svg>
+      <span>Parties</span>
+    </button>
+  </nav>
+
+  
+  </section><!-- /view-workspace -->
+
+
+  <section class="module-view" id="view-tools" hidden aria-hidden="true">
+    <header class="tools-shell" role="banner">
+      <div class="tools-shell__left">
+        <span class="tools-shell__mark" aria-hidden="true">T</span>
+        <span class="tools-shell__app">Tools</span>
+      </div>
+      <div class="tools-shell__right">
+        <button type="button" class="tools-shell__btn" data-home aria-label="Exit">
+          <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3.5L2.5 8 6 12.5M2.5 8H13.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Exit</span>
+        </button>
+      </div>
+    </header>
+    <div class="tools-topbar">
+      <div></div>
+      <h1>Desk tools</h1>
+      <p class="tools-topbar__meta">System 03</p>
+    </div>
+    <div class="tools-stage">
+      <div class="tools-grid">
+        <article class="tools-card">
+          <h2>Amount in words</h2>
+          <p class="tools-lead">Pakistani numbering — lakh and crore — for cheques and vouchers.</p>
+          <div class="tools-field">
+            <label for="toolsWordsAmt">Amount</label>
+            <input id="toolsWordsAmt" inputmode="decimal" placeholder="e.g. 1250000" />
+          </div>
+          <div class="tools-result" id="toolsWordsOut">Enter an amount.</div>
+          <div class="tools-actions">
+            <button type="button" class="tools-btn primary" id="toolsWordsCopy">Copy</button>
+          </div>
+        </article>
+
+        <article class="tools-card">
+          <h2>Batch total</h2>
+          <p class="tools-lead">Add slip amounts without leaving the desk. Saved on this browser.</p>
+          <div class="tools-row">
+            <div class="tools-field">
+              <label for="toolsTallyAmt">Amount</label>
+              <input id="toolsTallyAmt" inputmode="decimal" placeholder="0.00" />
+            </div>
+            <div class="tools-field">
+              <label for="toolsTallyNote">Note</label>
+              <input id="toolsTallyNote" placeholder="Optional" />
+            </div>
+          </div>
+          <div class="tools-actions">
+            <button type="button" class="tools-btn primary" id="toolsTallyAdd">Add line</button>
+            <button type="button" class="tools-btn" id="toolsTallyClear">Clear</button>
+          </div>
+          <div class="tools-tally" id="toolsTallyList"></div>
+          <div class="tools-result">Total <span id="toolsTallyTotal">0.00</span></div>
+        </article>
+
+        <article class="tools-card">
+          <h2>Date span</h2>
+          <p class="tools-lead">Working days between two slip dates.</p>
+          <div class="tools-row">
+            <div class="tools-field">
+              <label for="toolsDateFrom">From</label>
+              <input id="toolsDateFrom" type="date" />
+            </div>
+            <div class="tools-field">
+              <label for="toolsDateTo">To</label>
+              <input id="toolsDateTo" type="date" />
+            </div>
+          </div>
+          <div class="tools-result" id="toolsDateOut">Pick both dates.</div>
+        </article>
+
+        <article class="tools-card">
+          <h2>Rate split</h2>
+          <p class="tools-lead">Commission, withholding, or any percent off an amount.</p>
+          <div class="tools-row">
+            <div class="tools-field">
+              <label for="toolsRateAmt">Amount</label>
+              <input id="toolsRateAmt" inputmode="decimal" placeholder="0.00" />
+            </div>
+            <div class="tools-field">
+              <label for="toolsRatePct">Rate %</label>
+              <input id="toolsRatePct" inputmode="decimal" placeholder="e.g. 1.5" />
+            </div>
+          </div>
+          <div class="tools-result" id="toolsRateOut">Enter amount and rate.</div>
+        </article>
+
+        <article class="tools-card tools-card--wide">
+          <h2>Scratch pad</h2>
+          <p class="tools-lead">Private notes on this machine. Nothing is uploaded.</p>
+          <div class="tools-field">
+            <label for="toolsNotes">Notes</label>
+            <textarea id="toolsNotes" placeholder="Party names, pending vouchers, reminders…"></textarea>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <div class="page-marquee" aria-hidden="true">
+    <div class="page-marquee__track">
+      <div class="page-marquee__group">
+        <span>Zero noise</span><i>✦</i>
+        <span>Clear structure</span><i>✦</i>
+        <span>One workflow</span><i>✦</i>
+        <span>Build with intent</span><i>✦</i>
+        <span>Work with clarity</span><i>✦</i>
+        <span>Precision in every detail</span><i>✦</i>
+      </div>
+      <div class="page-marquee__group" aria-hidden="true">
+        <span>Zero noise</span><i>✦</i>
+        <span>Clear structure</span><i>✦</i>
+        <span>One workflow</span><i>✦</i>
+        <span>Build with intent</span><i>✦</i>
+        <span>Work with clarity</span><i>✦</i>
+        <span>Precision in every detail</span><i>✦</i>
+      </div>
+    </div>
+  </div>
+
+  <script src="vendor/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script src="vendor/lenis.min.js"></script>
+  <script src="nexo-scroll.js"></script>
+  <script src="nexo-menu/menu.js"></script>
+  <script src="nexo-wipe/wipe.js"></script>
+  <script src="nexo-login/login.js"></script>
+  <script src="nexo-workspace/nexo-dialog.js"></script>
+  <script src="nexo-workspace/nexo-data.js"></script>
+  <script src="nexo-workspace/nexo-seed.js"></script>
+  <script src="nexo-workspace/nexo-quick-edit.js"></script>
+  <script src="nexo-workspace/workspace.js"></script>
+  <script src="nexo-workspace/nexo-attachments.js"></script>
+  <script src="nexo-workspace/new-slip.js"></script>
+  <script src="nexo-workspace/nexo-select.js"></script>
+  <script src="nexo-workspace/nexo-print.js"></script>
+
+
+
+<script src="nexo-workspace/nexo-pages.js"></script>
+  <script src="nexo-tools/tools.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
+

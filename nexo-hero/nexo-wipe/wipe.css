@@ -1,0 +1,101 @@
+/* NEXO reusable Lannino wipe — matches original */
+:root {
+  --nexo-wipe-primary: var(--primary, #B55500);
+  --nexo-wipe-ink: var(--brown, #34170A);
+  --nexo-wipe-on: var(--on-fill, #FFF2E0);
+}
+
+#nexoWipe,
+.nexo-wipe {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  visibility: hidden;
+  pointer-events: none;
+}
+#nexoWipe.is-active,
+.nexo-wipe.is-active {
+  visibility: visible;
+  pointer-events: auto;
+}
+body.wipe-active .motion-lines,
+body.wipe-active .page-marquee {
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+body.wipe-active .ws-login {
+  pointer-events: none;
+}
+
+#nexoWipe .pt__panel,
+.nexo-wipe .pt__panel {
+  position: absolute;
+  inset: 0;
+  transform: translateY(118%);
+  will-change: transform;
+}
+#nexoWipe .pt__panel--primary,
+.nexo-wipe .pt__panel--primary {
+  background: var(--nexo-wipe-primary);
+  color: var(--nexo-wipe-primary);
+  z-index: 1;
+}
+#nexoWipe .pt__panel--ink,
+.nexo-wipe .pt__panel--ink {
+  background: var(--nexo-wipe-ink);
+  color: var(--nexo-wipe-ink);
+  z-index: 2;
+}
+#nexoWipe .pt__cap,
+.nexo-wipe .pt__cap {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: clamp(7vh, 11vh, 13vh);
+  display: block;
+  overflow: visible;
+}
+#nexoWipe .pt__cap--top,
+.nexo-wipe .pt__cap--top { bottom: calc(100% - 1px); }
+#nexoWipe .pt__cap--bottom,
+.nexo-wipe .pt__cap--bottom { top: calc(100% - 1px); }
+#nexoWipe .pt__cap path,
+.nexo-wipe .pt__cap path { fill: currentColor; }
+
+/* Centered label — same as original NEXO */
+#nexoWipe .pt__label,
+.nexo-wipe .pt__label {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  margin: 0;
+  padding: 0 0 0 0.14em; /* optical center with letter-spacing */
+  font-family: "Poiret One", ui-sans-serif, system-ui, sans-serif;
+  font-weight: 400;
+  font-size: clamp(48px, 9vw, 110px);
+  letter-spacing: 0.14em;
+  line-height: 1;
+  color: var(--nexo-wipe-on);
+  text-align: center;
+  text-transform: uppercase;
+  user-select: none;
+  pointer-events: none;
+  white-space: nowrap;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+#nexoWipe .pt__label .pt-char,
+.nexo-wipe .pt__label .pt-char {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(0.55em);
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #nexoWipe,
+  .nexo-wipe { display: none !important; }
+}

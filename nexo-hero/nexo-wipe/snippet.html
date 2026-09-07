@@ -1,0 +1,26 @@
+<!--
+  NEXO Wipe — reusable anywhere
+  1. Link nexo-wipe/wipe.css
+  2. Paste markup below (once, near <body>)
+  3. Load gsap then nexo-wipe/wipe.js
+  4. NexoWipe.play({ label: "Workspace", onCovered, onComplete })
+-->
+<div id="nexoWipe" class="nexo-wipe" aria-hidden="true">
+  <div class="pt__panel pt__panel--primary" id="nexoWipePrimary">
+    <svg class="pt__cap pt__cap--top" viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M 0 12 C 30 0 70 0 100 12 Z"></path>
+    </svg>
+    <svg class="pt__cap pt__cap--bottom" viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M 0 0 C 30 12 70 12 100 0 Z"></path>
+    </svg>
+  </div>
+  <div class="pt__panel pt__panel--ink" id="nexoWipeInk">
+    <svg class="pt__cap pt__cap--top" viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M 0 12 C 30 0 70 0 100 12 Z"></path>
+    </svg>
+    <svg class="pt__cap pt__cap--bottom" viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M 0 0 C 30 12 70 12 100 0 Z"></path>
+    </svg>
+    <p class="pt__label" id="nexoWipeLabel">Home</p>
+  </div>
+</div>

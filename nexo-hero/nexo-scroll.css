@@ -1,0 +1,654 @@
+/* NEXO — window Lenis + visual chrome
+   Loaded last so it wins over inner overflow panes. */
+
+html.lenis,
+html.lenis body {
+  height: auto !important;
+}
+
+html.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+html:has(body.in-workspace),
+html:has(body.in-tools) {
+  height: auto !important;
+  min-height: 100% !important;
+  min-height: 100dvh !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  scroll-behavior: auto !important;
+  scrollbar-gutter: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(52, 23, 10, 0.32) transparent;
+}
+
+html:has(body.in-workspace) body,
+html:has(body.in-tools) body,
+body.in-workspace,
+body.in-tools {
+  height: auto !important;
+  min-height: 100% !important;
+  min-height: 100dvh !important;
+  overflow-x: hidden !important;
+  overflow-y: visible !important;
+}
+
+html:has(body.in-workspace)::-webkit-scrollbar,
+html:has(body.in-tools)::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+html:has(body.in-workspace)::-webkit-scrollbar-track,
+html:has(body.in-tools)::-webkit-scrollbar-track {
+  background: transparent;
+}
+html:has(body.in-workspace)::-webkit-scrollbar-thumb,
+html:has(body.in-tools)::-webkit-scrollbar-thumb {
+  background: rgba(52, 23, 10, 0.22);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+html:has(body.in-workspace)::-webkit-scrollbar-thumb:hover,
+html:has(body.in-tools)::-webkit-scrollbar-thumb:hover {
+  background: rgba(52, 23, 10, 0.36);
+  background-clip: padding-box;
+}
+
+body.nexo-overlay-open,
+body.ws-login-open,
+body.menu-open,
+body.wipe-active,
+body.in-workspace.nexo-overlay-open,
+body.in-workspace.ws-login-open,
+body.in-workspace.menu-open,
+body.in-workspace.wipe-active,
+body.in-tools.nexo-overlay-open,
+body.in-tools.ws-login-open,
+body.in-tools.menu-open,
+body.in-tools.wipe-active,
+html.lenis.lenis-stopped body.in-workspace,
+html.lenis.lenis-stopped body.in-tools {
+  overflow: hidden !important;
+}
+
+body.in-workspace {
+  --content-gutter: 16px;
+  --ws-stage-pad-top: 176px;
+  --ws-stage-pad-bottom: 48px;
+  --ws-sticky-top: 176px;
+}
+
+/* Inactive module must NOT stay in flow — otherwise Tools chrome
+   sits on top of Workspace and inflates document height. */
+#view-workspace:not(.is-on),
+#view-workspace[hidden],
+#view-tools:not(.is-on),
+#view-tools[hidden] {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  max-height: 0 !important;
+  overflow: hidden !important;
+  position: absolute !important;
+  inset: 0 auto auto 0 !important;
+  width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+body:not(.in-tools) #view-tools,
+body:not(.in-tools) .tools-shell,
+body:not(.in-tools) .tools-topbar,
+body:not(.in-tools) .tools-stage {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+#view-workspace.is-on,
+#view-workspace.module-view.is-on {
+  position: relative !important;
+  inset: auto !important;
+  top: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: auto !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 100vh !important;
+  min-height: 100dvh !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  display: block !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+  box-sizing: border-box !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
+#view-workspace.is-on .nexo-rail,
+#view-workspace.is-on .nexo-shell {
+  position: fixed !important;
+}
+
+#view-workspace.is-on .topbar {
+  position: fixed !important;
+  left: calc(var(--stage-left, var(--rail-w, 68px)) + var(--content-gutter, 16px)) !important;
+  right: var(--content-gutter, 16px) !important;
+  width: auto !important;
+  z-index: 50 !important;
+}
+
+html body.in-workspace #view-workspace.is-on .ws-stage,
+#view-workspace.is-on .ws-stage {
+  position: relative !important;
+  top: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: auto !important;
+  width: auto !important;
+  max-width: none !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow: visible !important;
+  overflow-x: visible !important;
+  overflow-y: visible !important;
+  -webkit-overflow-scrolling: auto !important;
+  overscroll-behavior: auto !important;
+  touch-action: auto !important;
+  margin-left: calc(var(--stage-left, var(--rail-w, 68px)) + var(--content-gutter, 16px)) !important;
+  margin-right: var(--content-gutter, 16px) !important;
+  padding-top: var(--ws-stage-pad-top, 176px) !important;
+  padding-bottom: var(--ws-stage-pad-bottom, 48px) !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  box-sizing: border-box !important;
+}
+
+body.rail-hidden #view-workspace.is-on .ws-stage {
+  margin-left: var(--content-gutter, 16px) !important;
+  left: auto !important;
+}
+
+html body.in-workspace #view-workspace.is-on .ws-stage-body,
+html body.in-workspace #view-workspace.is-on .ws-stage__scroll,
+#view-workspace.is-on .ws-stage-body,
+#view-workspace.is-on .ws-stage__scroll {
+  overflow: visible !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  max-width: none !important;
+  width: 100% !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  box-sizing: border-box !important;
+}
+
+#view-workspace.is-on .ws-page,
+#view-workspace.is-on .ws-page.is-active,
+#view-workspace.is-on .panel,
+#view-workspace.is-on .nexo-page-panel,
+#view-workspace.is-on .search-panel,
+#view-workspace.is-on .history-panel,
+#view-workspace.is-on .new-slip-panel {
+  width: 100% !important;
+  max-width: none !important;
+  box-sizing: border-box !important;
+}
+
+#view-workspace.is-on .ws-page.is-active {
+  overflow: visible !important;
+  height: auto !important;
+  max-height: none !important;
+}
+
+#view-workspace .ws-stage::-webkit-scrollbar,
+#view-workspace .ws-stage-body::-webkit-scrollbar,
+#view-workspace .ws-stage__scroll::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+#view-workspace .nexo-dd__panel,
+#view-workspace .suggestions,
+#view-workspace .nexo-select__menu,
+#view-workspace .nexo-sel-menu,
+#view-workspace .hx-menu--scroll,
+#view-workspace .nexo-dialog__body,
+#view-workspace .nqe-body {
+  overscroll-behavior: contain;
+}
+
+#view-workspace .table-wrap,
+#view-workspace .search-table-host,
+#view-workspace .history-table-host,
+#view-workspace .party-table-host,
+#view-workspace .parties-table-host,
+#view-workspace .banks-table-host,
+#view-workspace .ledger-table-host,
+#view-workspace .trash-table-host,
+#view-workspace .table-host,
+#view-workspace .nexo-page-panel,
+#view-workspace .search-panel,
+#view-workspace .history-panel {
+  overflow: visible !important;
+}
+
+#view-workspace .table-wrap {
+  width: 100%;
+  max-width: 100%;
+  position: relative;
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+  max-height: none !important;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+#view-workspace .table,
+#view-workspace table.table {
+  width: 100%;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+}
+
+/* Original thead stays in document flow — never overlays the first rows. */
+#view-workspace .table thead th,
+#view-workspace table.table thead th,
+#view-workspace .tm-table thead th {
+  position: static !important;
+  top: auto !important;
+  bottom: auto !important;
+  z-index: auto !important;
+  background: #F5E6D3 !important;
+  background-clip: padding-box !important;
+  box-shadow: none !important;
+}
+#view-workspace .table thead th.party-cell,
+#view-workspace .table thead th.desc-cell,
+#view-workspace .table thead th.remarks-cell,
+#view-workspace .table tbody td.party-cell,
+#view-workspace .table tbody td.desc-cell,
+#view-workspace .table tbody td.remarks-cell {
+  text-align: left !important;
+  padding-left: 12px !important;
+}
+#view-workspace .table thead th.amount-cell,
+#view-workspace .table thead th.num,
+#view-workspace .table tbody td.amount-cell,
+#view-workspace .table tbody td.num,
+#view-workspace .table tfoot td.amount-cell {
+  text-align: right !important;
+  padding-right: 12px !important;
+}
+
+#view-workspace .table tfoot td,
+#view-workspace .table tfoot .total-row td {
+  position: static !important;
+  bottom: auto !important;
+}
+
+/* Floating clone — pinned under the topbar, column-aligned, opaque. */
+.nexo-thead-float {
+  display: none !important;
+  position: fixed;
+  z-index: 46;
+  overflow: hidden;
+  pointer-events: auto;
+  background: #F5E6D3;
+  border: 1px solid #E0CDB8;
+  border-top: 0;
+  border-radius: 0 0 0 0;
+  box-shadow:
+    0 1px 0 #E0CDB8,
+    0 10px 18px -12px rgba(52, 23, 10, 0.35);
+}
+.nexo-thead-float.is-on {
+  display: none !important;
+}
+body:not(.in-workspace) .nexo-thead-float,
+body.nexo-overlay-open .nexo-thead-float,
+body.menu-open .nexo-thead-float,
+body.wipe-active .nexo-thead-float {
+  display: none !important;
+}
+.nexo-thead-float table,
+.nexo-thead-float .table {
+  width: auto;
+  margin: 0;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  background: #F5E6D3;
+  table-layout: fixed;
+}
+.nexo-thead-float thead th,
+.nexo-thead-float th {
+  position: static !important;
+  top: auto !important;
+  background: #F5E6D3 !important;
+  color: #5c4638 !important;
+  font-family: "Inter", "Onest", system-ui, sans-serif !important;
+  font-size: 11.5px !important;
+  font-weight: 750 !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  text-align: center !important;
+  padding: 10px 8px !important;
+  border-bottom: 1px solid #E0CDB8 !important;
+  white-space: nowrap;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: none !important;
+}
+.nexo-thead-float th.party-cell,
+.nexo-thead-float th.desc-cell,
+.nexo-thead-float th.remarks-cell {
+  text-align: left !important;
+  padding-left: 12px !important;
+}
+.nexo-thead-float th.amount-cell,
+.nexo-thead-float th.num {
+  text-align: right !important;
+  padding-right: 12px !important;
+}
+.nexo-thead-float th[data-sort] {
+  cursor: pointer;
+  user-select: none;
+}
+.nexo-thead-float th.check-col {
+  width: 48px;
+  text-align: center !important;
+}
+
+.sort-ind {
+  display: inline-block;
+  width: 0;
+  height: 0;
+  margin-left: 6px;
+  vertical-align: middle;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-bottom: 5px solid rgba(52, 23, 10, 0.22);
+}
+.sort-ind.is-asc {
+  border-bottom-color: #34170A;
+}
+.sort-ind.is-desc {
+  border-bottom: 0;
+  border-top: 5px solid #34170A;
+}
+
+/* ---- Tools (only when active) ---- */
+#view-tools.is-on,
+#view-tools.module-view.is-on {
+  position: relative !important;
+  inset: auto !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 100vh !important;
+  min-height: 100dvh !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  display: block !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+#view-tools.is-on .tools-shell,
+#view-tools.is-on .tools-topbar {
+  position: fixed !important;
+}
+#view-tools.is-on .tools-topbar {
+  left: var(--content-gutter, 16px) !important;
+  right: var(--content-gutter, 16px) !important;
+  width: auto !important;
+}
+#view-tools.is-on .tools-stage {
+  position: relative !important;
+  top: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: auto !important;
+  width: auto !important;
+  max-width: none !important;
+  height: auto !important;
+  overflow: visible !important;
+  margin-left: var(--content-gutter, 16px);
+  margin-right: var(--content-gutter, 16px);
+  padding-top: calc(0.85rem * 2 + 42px + 96px);
+  padding-bottom: 48px;
+}
+
+/* ---- Search: full-width date range + tighter filters ---- */
+#view-workspace .search-date-chips,
+#view-workspace .cir-tabs {
+  display: flex !important;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex-wrap: nowrap;
+}
+#view-workspace .search-date-chips::-webkit-scrollbar,
+#view-workspace .cir-tabs::-webkit-scrollbar {
+  display: none;
+}
+#view-workspace .search-date-chips .chip,
+#view-workspace .cir-tabs .cir-tabs__t {
+  flex: 1 1 0;
+  min-width: 0;
+}
+#view-workspace .search-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+#view-workspace .search-actions .print-actions {
+  margin-left: auto;
+}
+
+/* ---- Compact tablet / phone chrome ---- */
+@media (max-width: 900px) {
+  body.in-workspace {
+    --content-gutter: 12px;
+    --ws-stage-pad-top: 148px;
+    --ws-stage-pad-bottom: 96px;
+    --ws-sticky-top: 148px;
+  }
+  #view-workspace.is-on .topbar {
+    left: 12px !important;
+    right: 12px !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    gap: 8px !important;
+    padding: 10px 12px !important;
+    min-height: 56px !important;
+    align-items: center !important;
+  }
+  #view-workspace.is-on .topbar-actions,
+  #view-workspace.is-on .topbar-search {
+    display: none !important;
+  }
+  #view-workspace.is-on .topbar-center {
+    order: 0 !important;
+    grid-column: 1 !important;
+    justify-self: start !important;
+    text-align: left !important;
+    min-width: 0;
+  }
+  #view-workspace.is-on .topbar-page-title {
+    font-size: 1.05rem !important;
+    letter-spacing: 0.1em !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  #view-workspace.is-on .topbar-end {
+    order: 0 !important;
+    grid-column: 2 !important;
+    justify-content: flex-end !important;
+    flex-wrap: nowrap !important;
+    gap: 6px !important;
+  }
+  #view-workspace.is-on .topbar-end .btn {
+    flex: 0 0 auto !important;
+    min-height: 36px;
+    padding: 0 12px;
+  }
+  html body.in-workspace #view-workspace.is-on .ws-stage,
+  #view-workspace.is-on .ws-stage {
+    margin-left: 12px !important;
+    margin-right: 12px !important;
+    padding-top: var(--ws-stage-pad-top, 148px) !important;
+    padding-bottom: var(--ws-stage-pad-bottom, 96px) !important;
+    top: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    right: auto !important;
+  }
+  #view-tools.is-on .tools-stage {
+    padding-top: calc(0.85rem * 2 + 42px + 88px);
+    margin-left: 12px;
+    margin-right: 12px;
+  }
+  #view-tools.is-on .tools-topbar {
+    left: 12px !important;
+    right: 12px !important;
+  }
+  #view-workspace .table-wrap,
+  #view-workspace .search-table-host,
+  #view-workspace .history-table-host,
+  #view-workspace .ledger-table-host,
+  #view-workspace .banks-table-host,
+  #view-workspace .party-table-host,
+  #view-workspace .trash-table-host {
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  #view-workspace .table thead th,
+  #view-workspace table.table thead th,
+  #view-workspace .tm-table thead th {
+    position: static !important;
+    top: auto !important;
+  }
+}
+
+@media (max-width: 720px) {
+  body.in-workspace {
+    --ws-stage-pad-top: 140px;
+    --ws-stage-pad-bottom: 110px;
+    --ws-sticky-top: 140px;
+  }
+  #view-workspace.is-on .topbar-page-title {
+    font-size: 0.95rem !important;
+  }
+
+  #view-workspace #ws-page-search .search-filters,
+  #view-workspace .search-filters {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px 10px !important;
+  }
+  #view-workspace .search-date-chips .chip,
+  #view-workspace .cir-tabs .cir-tabs__t {
+    flex: 0 0 auto;
+    padding: 0 12px;
+    height: 32px;
+    min-height: 32px;
+  }
+  #view-workspace .search-actions .btn {
+    flex: 1 1 auto;
+    min-height: 40px;
+  }
+
+  #view-workspace #ws-page-new .new-slip-keys {
+    display: none !important;
+  }
+  #view-workspace #ws-page-new .new-slip-title {
+    font-size: 1.2rem !important;
+    letter-spacing: 0.08em !important;
+    white-space: normal;
+  }
+  #view-workspace #ws-page-new .new-slip-head {
+    grid-template-columns: 1fr !important;
+    text-align: left !important;
+    gap: 8px !important;
+    margin-bottom: 14px !important;
+    padding-bottom: 12px !important;
+  }
+  #view-workspace #ws-page-new .session-bar {
+    justify-content: flex-start !important;
+    justify-self: start !important;
+  }
+  #view-workspace #ws-page-new .serial-voucher-row {
+    grid-template-columns: 1fr !important;
+  }
+  #view-workspace #ws-page-new .sr-label-cell,
+  #view-workspace #ws-page-new .serial-input-wrap,
+  #view-workspace #ws-page-new .sr-btn-group {
+    grid-column: 1 !important;
+  }
+  #view-workspace #ws-page-new .sr-btn-group {
+    grid-row: 3 !important;
+    flex-wrap: wrap;
+    justify-content: flex-start !important;
+  }
+
+  #view-workspace .hx-bar,
+  #view-workspace .history-filters.hx-bar {
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  #view-workspace .hx-bar::-webkit-scrollbar {
+    display: none;
+  }
+  #view-workspace .hx-bar .nexo-search,
+  #view-workspace .hx-bar .hx-search {
+    flex: 1 0 180px;
+    min-width: 180px;
+  }
+}
+
+@media (max-width: 480px) {
+  body.in-workspace {
+    --ws-stage-pad-top: 136px;
+    --ws-sticky-top: 136px;
+  }
+  #view-workspace #ws-page-search .search-filters .field:nth-child(n+5) {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.lenis,
+  html.lenis body,
+  html:has(body.in-workspace),
+  html:has(body.in-tools) {
+    scroll-behavior: auto !important;
+  }
+}
+
+@media print {
+  html, body, #view-workspace, #view-tools, .ws-stage, .tools-stage {
+    overflow: visible !important;
+    height: auto !important;
+    position: static !important;
+    padding: 0 !important;
+  }
+  .nexo-thead-float {
+    display: none !important;
+  }
+}

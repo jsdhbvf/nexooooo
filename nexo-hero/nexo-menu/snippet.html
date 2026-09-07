@@ -1,0 +1,47 @@
+<!--
+  NEXO modules
+  Menu  → nexo-menu/menu.css + menu.js     NexoMenu.init()
+  Wipe  → nexo-wipe/wipe.css + wipe.js     NexoWipe.play({ label, onCovered })
+  Login → nexo-login/login.css + login.js  NexoLogin.open("workspace"|"tools")
+  Page  → script.js                        NexoPage.home() / nexo:enter
+
+  Demo login: admin / admin
+  See MODULES.md
+-->
+
+<button type="button" class="nav__menu" id="menuBtn"
+  aria-expanded="false" aria-controls="sideMenu" aria-label="Open menu">
+  <span class="nav__menu-icon" aria-hidden="true">
+    <span class="nav__menu-line nav__menu-line--1"></span>
+    <span class="nav__menu-line nav__menu-line--2"></span>
+  </span>
+</button>
+
+<div class="menu-overlay" id="menuOverlay" aria-hidden="true">
+  <div class="menu-scrim"></div>
+</div>
+
+<aside class="side-menu" id="sideMenu" role="dialog" aria-modal="true"
+  aria-label="Site menu" aria-hidden="true">
+  <div class="side-menu__orange" aria-hidden="true">
+    <svg class="side-menu__orange-cap" viewBox="0 0 20 100" preserveAspectRatio="none">
+      <path d="M 16 0 C 6 22, 2 48, 6 72 C 9 88, 13 96, 16 100 L 20 100 L 20 0 Z"></path>
+    </svg>
+    <div class="side-menu__orange-body"></div>
+  </div>
+  <div class="side-menu__brown">
+    <svg class="side-menu__brown-cap" viewBox="0 0 20 100" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M 15.2 0 C 5.5 22, 1.8 48, 5.5 72 C 8.5 88, 12.5 96, 15.2 100 L 20 100 L 20 0 Z"></path>
+    </svg>
+    <div class="side-menu__sheet">
+      <div class="side-menu__inner">
+        <div class="side-menu__top"><span class="side-menu__label">Menu</span></div>
+        <ul class="side-menu__nav">
+          <li><a href="#home" class="is-active"><span class="side-menu__num">01</span> Home</a></li>
+          <li><a href="#workspace"><span class="side-menu__num">02</span> Workspace</a></li>
+          <li><a href="#tools"><span class="side-menu__num">03</span> Tools</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</aside>
